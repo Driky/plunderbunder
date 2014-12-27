@@ -1,0 +1,20 @@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>@title</title>
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
+        
+        <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+        <script type="text/javascript" src="@routes.Assets.at("lib/react/react.js")"></script>
+        <script type="text/javascript" src="@routes.Application.assetRoutes"></script>
+        <script type="text/javascript" src="@routes.Application.jsRoutes"></script>
+        <script type="text/javascript" src="@routes.Application.configuration"></script>
+    </head>
+    <body>
+        @content
+    </body>
+</html>
