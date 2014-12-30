@@ -15,6 +15,7 @@ import json
 import os
 import codecs
 import yaml
+import sqlite3
 
 def get_sde_path():
     path_exists = False
@@ -39,7 +40,7 @@ def convert_sde_yaml(sde_path):
     
     for filename in os.listdir(sde_path):
         if filename[-5:] == '.yaml':
-            print "Processing %s" % (filename)
+            print "[.] Processing %s (YAML)" % (filename)
             infile = open(os.path.join(sde_path, filename))
             content = infile.read()
             data = yaml.load(content)
@@ -58,7 +59,39 @@ def convert_sde_yaml(sde_path):
             outfile.write(outdata)
             outfile.close()
             infile.close()
-
+            
+# Base function taken from the python SQLite3 docs
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+    
+def convert_sde_sqlite(sde_path):
+    # This is the filename as of the Rhea patch, I'll make it more
+    # dynamic if it changes in the future
+    con = sqlite3.connect(os.path.join(sde_path,'universeDataDx.db'))
+    con.row_factory = sqlite3.Row
+    cursor = con.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = map(lambda t: t[0], cursor.fetchall())
+    
+    # Make it easier to transform to JSON
+    con.row_factory = dict_factory
+    dict_cursor = con.cursor()
+    for table in tables:
+        print "[.] Processing %s (SQLite)" % (table)
+        dict_cursor.execute("SELECT * FROM %s;" % (table))
+        results = dict_cursor.fetchall()
+        
+        outfile = open(os.path.join('json', table + ".json"), "w")
+        output = json.dumps(results)
+        
+        outfile.write(output)
+        outfile.close()
+    
+    con.close()
+    
 def repair_psv_newlines(header_count, content):
     magic_eol = "|##$EOL$##"
     
@@ -88,7 +121,7 @@ def convert_psv_files():
             print "\n[!] Directory %s was not found, try again\n" % (psv_path)
             
     for filename in os.listdir(psv_path):
-        print "Processing: " + filename
+        print "[.] Processing: %s (PSV)" % (filename)
         
         # Since this is coming from a windows dump, the encoding is likely latin1
         # which messes with the JSON output later down the road
@@ -113,11 +146,11 @@ def convert_psv_files():
                 val = e[1].replace('\r\n', '\n')
                 entry[e[0]] = val if val != 'NULL' else None
                 
-            print entry
+            # print entry
             results.append(entry)
         
         outfile = open(os.path.join('json',filename.split('.')[0] + ".json"), "w")
-        print results
+        # print results
         output = json.dumps(results)
         
         outfile.write(output)
@@ -127,6 +160,6 @@ def convert_psv_files():
             
 sde_path = get_sde_path()
 
-convert_sde_yaml(sde_path)
-
 convert_psv_files()
+convert_sde_yaml(sde_path)
+convert_sde_sqlite(sde_path)
