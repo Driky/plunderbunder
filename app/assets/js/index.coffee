@@ -33,9 +33,8 @@ LoginButton = React.createClass
         $.ajax userApi.url
         .done ((result) ->
             resJson = $.parseJSON(result)
-            lastGist = result[0]
             if this.isMounted()
-                this.setState { logged_in: true, character: resJson.character,  ajaxLoading: false}
+                this.setState { logged_in: true, character: resJson.character + ' [' + resJson.token + ']',  ajaxLoading: false}
             ).bind this
         .fail ((jqXHR, textStatus, errorThrown) ->
             resultCode = jqXHR.status

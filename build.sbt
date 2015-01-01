@@ -11,5 +11,6 @@ libraryDependencies ++= Seq(
   anorm,
   cache,
   ws,
-  "org.webjars" % "react" % "0.12.1"
+  "org.webjars" % "react" % "0.12.1",
+  "org.webjars" % "bootstrap" % "3.3.1"
 )

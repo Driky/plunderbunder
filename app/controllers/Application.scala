@@ -28,7 +28,7 @@ object Application extends Controller {
       val verifiedResult = verifyAuthToken(token)
 
       verifiedResult.map(res => {
-        Ok(s"""{ "character": "${res.characterName}" } """)
+        Ok(s"""{ "character": "${res.characterName}", "token": "${token}" } """)
       }).recover({
         case _: InvalidTokenException => Unauthorized(JsObject(Seq("error" -> JsString("Token Expired"))))
         case e                        => throw e
@@ -75,7 +75,9 @@ object Application extends Controller {
   def jsRoutes = Action { implicit request =>
     Ok(
       Routes.javascriptRouter("jsRoutes")(
-        routes.javascript.Application.user)).as("text/javascript")
+        routes.javascript.Application.user,
+        routes.javascript.Configure.maintenanceStatus,
+        routes.javascript.Configure.reloadSde)).as("text/javascript")
   }
 
   def configuration = Action { implicit request =>
@@ -85,7 +87,7 @@ object Application extends Controller {
     val clientID = config.getString("crest.client_id", None).getOrElse("missing_client_id")
     val callbackURI = config.getString("crest.callback", None).getOrElse("missing_callback_uri")
 
-    val eveLoginUrl = s"https://login.eveonline.com/oauth/authorize/?response_type=code&redirect_uri=${callbackURI}&client_id=${clientID}&scope=&state=uniquestate123"
+    val eveLoginUrl = s"https://login.eveonline.com/oauth/authorize/?response_type=code&redirect_uri=${callbackURI}&client_id=${clientID}&scope=publicData&state=uniquestate123"
 
     val jsResult = JsObject(Seq("eve_login" -> JsString(eveLoginUrl)))
 
