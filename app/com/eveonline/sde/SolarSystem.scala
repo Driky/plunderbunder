@@ -80,17 +80,37 @@ object SolarSystem extends BaseDataset {
         corridor, fringe,
         hub, international,
         regional) VALUES (
-         ${value.solarSystemID}, '${value.solarSystemName}',
-         ${value.regionID}, {factionID},
-         ${value.radius}, ${value.luminosity},
-         ${value.sunTypeID}, ${value.constellationID},  
-         ${value.x}, ${value.y}, ${value.z}, 
-         ${value.security}, {securityClass},
-         ${value.border}, ${value.constellation},
-         ${value.corridor}, ${value.fringe},
-         ${value.hub}, ${value.international},
-         ${value.regional}
-        );""").on('factionID -> value.factionID, 'securityClass -> value.securityClass)
+         {solarSystemID}, {solarSystemName},
+         {regionID}, {factionID},
+         {radius}, {luminosity},
+         {sunTypeID}, {constellationID},  
+         {x}, {y}, {z}, 
+         {security}, {securityClass},
+         {border}, {constellation},
+         {corridor}, {fringe},
+         {hub}, {international},
+         {regional}
+        );""").on(
+        'solarSystemID -> value.solarSystemID,
+        'solarSystemName -> value.solarSystemName,
+        'regionID -> value.regionID,
+        'factionID -> value.factionID,
+        'radius -> value.radius,
+        'luminosity -> value.luminosity,
+        'sunTypeID -> value.sunTypeID,
+        'constellationID -> value.constellationID,
+        'x -> value.x,
+        'y -> value.y,
+        'z -> value.z,
+        'security -> value.security,
+        'securityClass -> value.securityClass,
+        'border -> value.border,
+        'constellation -> value.constellation,
+        'corridor -> value.corridor,
+        'fringe -> value.fringe,
+        'hub -> value.hub,
+        'international -> value.international,
+        'regional -> value.regional)
       sql.executeInsert()
     }
   }

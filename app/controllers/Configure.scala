@@ -43,7 +43,7 @@ object Configure extends Controller {
 
   def reloadRegions = {
     val jsResult = loadSdeJson("sde_scripts/json/mapRegions.json")
-    
+
     jsResult.validate[List[Region]] match {
       case JsSuccess(regions, _) => {
         Region.deleteAll
@@ -56,7 +56,7 @@ object Configure extends Controller {
       }
     }
   }
-  
+
   def reloadSolarSystems = {
     val jsResult = loadSdeJson("sde_scripts/json/mapSolarSystems.json")
     jsResult.validate[List[SolarSystem]] match {
@@ -64,6 +64,38 @@ object Configure extends Controller {
         SolarSystem.deleteAll
         solarSystems.foreach { s => SolarSystem.create(s) }
         SolarSystem.updateModificationTime
+        true
+      }
+      case JsError(reason) => {
+        throw new Exception(reason.seq.toString)
+      }
+    }
+  }
+
+  def reloadInventoryTypes = {
+    val jsResult = loadSdeJson("sde_scripts/json/invTypes.json")
+    jsResult.validate[List[InventoryType]] match {
+      case JsSuccess(inventoryTypes, _) => {
+        InventoryType.deleteAll
+        inventoryTypes.foreach { t => InventoryType.create(t) }
+        InventoryType.updateModificationTime
+        true
+      }
+      case JsError(reason) => {
+        throw new Exception(reason.seq.toString)
+      }
+    }
+  }
+
+  def reloadBlueprints = {
+    val jsResult = loadSdeJson("sde_scripts/json/blueprints.json")
+    jsResult.validate[List[Blueprint]] match {
+      case JsSuccess(blueprints, _) => {
+        Blueprint.deleteAll
+        blueprints.foreach {
+          bp => Blueprint.create(bp)
+        }
+        Blueprint.updateModificationTime
         true
       }
       case JsError(reason) => {
@@ -81,6 +113,8 @@ object Configure extends Controller {
   def reloadSde = Action { implicit request =>
     reloadRegions
     reloadSolarSystems
+    reloadInventoryTypes
+    reloadBlueprints
 
     Ok("ok" mkString "\n")
   }

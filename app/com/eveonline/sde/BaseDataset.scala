@@ -38,8 +38,8 @@ trait BaseDataset {
     DB.withConnection { implicit c =>
       val sql = SQL(s"""INSERT INTO sde_maintenance 
         (data_set, last_import) VALUES (
-         '${dataSetName}', NOW() 
-        );""")
+         {dataSetName}, NOW() 
+        );""").on('dataSetName -> dataSetName)
       sql.executeInsert()
     }
   }

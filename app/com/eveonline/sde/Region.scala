@@ -39,13 +39,26 @@ object Region extends BaseDataset {
         (region_id, region_name,
         x, y, z, x_min, x_max, y_min, y_max, z_min, z_max, 
         faction_id, radius) VALUES (
-         ${value.regionID}, '${value.regionName}',
-         ${value.x}, ${value.y}, ${value.z}, 
-         ${value.xMin}, ${value.xMax}, 
-         ${value.yMin}, ${value.yMax}, 
-         ${value.zMin}, ${value.zMax},
-         {factionID}, ${value.radius} 
-        );""").on('factionID -> value.factionID)
+         {regionID}, {regionName},
+         {x}, {y}, {z}, 
+         {xMin},{xMax}, 
+         {yMin}, {yMax}, 
+         {zMin}, {zMax},
+         {factionID}, {radius} 
+        );""").on(
+        'regionID -> value.regionID,
+        'regionName -> value.regionName,
+        'x -> value.x,
+        'y -> value.y,
+        'z -> value.z,
+        'xMin -> value.xMin,
+        'xMax -> value.xMax,
+        'yMin -> value.yMin,
+        'yMax -> value.yMax,
+        'zMin -> value.zMin,
+        'zMax -> value.zMax,
+        'factionID -> value.factionID,
+        'radius -> value.radius)
       sql.executeInsert()
     }
   }
