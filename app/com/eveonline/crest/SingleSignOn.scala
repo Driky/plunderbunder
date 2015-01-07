@@ -10,15 +10,25 @@ import TokenResponseSerializer._
 import VerifyResponseSerializer._
 
 class InvalidTokenException extends Exception {
-  
+
 }
+
+case class SignOnTokens(accessToken: String, refreshToken: Option[String])
 
 object SingleSignOn {
 
   val generateTokenURI = "https://login.eveonline.com/oauth/token"
   val verifyTokenURI = "https://login.eveonline.com/oauth/verify"
 
-  def generateAuthToken(authorizationCode: String) = {
+  def generateAuthTokenFromRefreshToken(token: String) = {
+    generateAuthToken("refresh_token", "refresh_token", token)
+  }
+
+  def generateAuthTokenFromAuthCode(code: String) = {
+    generateAuthToken("authorization_code", "code", code)
+  }
+
+  def generateAuthToken(authMethod: String, authName: String, code: String) = {
 
     implicit val context = scala.concurrent.ExecutionContext.Implicits.global
 
@@ -32,14 +42,16 @@ object SingleSignOn {
       .withHeaders("Content-Type" -> "application/x-www-form-urlencoded")
 
     val postBody = Map(
-      "grant_type" -> Seq("authorization_code"),
-      "code" -> Seq(authorizationCode))
+      "grant_type" -> Seq(authMethod),
+      authName -> Seq(code))
 
     val result = tokenEndpoint.post(postBody)
 
     result.map { response =>
 
       if (response.status == 200) {
+
+        Logger.info("Token Response: " + response.json.toString())
 
         response.json.validate[TokenResponse] match {
           case JsError(e) => {
@@ -48,7 +60,7 @@ object SingleSignOn {
             Logger.info(e.toString)
             throw new Exception(e.toString())
           }
-          case JsSuccess(tr, _) => tr.accessToken
+          case JsSuccess(tr, _) => SignOnTokens(tr.accessToken, tr.refreshToken)
         }
       } else {
         throw new Exception(s"Error during request: ${response.status}")
@@ -70,6 +82,8 @@ object SingleSignOn {
 
         val js = response.json
 
+        Logger.info("Verify Request: " + js.toString())
+
         val errorReason = (js \ "error")
         if (errorReason.asOpt[String].isEmpty) {
 
@@ -80,7 +94,10 @@ object SingleSignOn {
               Logger.info(e.toString)
               throw new Exception(e.toString())
             }
-            case JsSuccess(vr, _) => vr
+            case JsSuccess(vr, _) => {
+              Logger.debug(s"Verified good token: ${authToken}")
+              vr
+            }
           }
         } else {
           if (errorReason.as[String].equals("invalid_token")) {

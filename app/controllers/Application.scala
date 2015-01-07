@@ -1,5 +1,6 @@
 package controllers
 
+import lookups._
 import play.api._
 import play.api.mvc._
 
@@ -23,20 +24,11 @@ object Application extends Controller {
     Future(Ok(views.html.index()))
   }
 
-  def user = Action.async { request =>
-    request.session.get("authenticated").map { token =>
-      val verifiedResult = verifyAuthToken(token)
-
-      verifiedResult.map(res => {
-        Ok(s"""{ "character": "${res.characterName}", "token": "${token}" } """)
-      }).recover({
-        case _: InvalidTokenException => Unauthorized(JsObject(Seq("error" -> JsString("Token Expired"))))
-        case e                        => throw e
-      })
-
-    }.getOrElse {
-      Future(Unauthorized(JsObject(Seq("error" -> JsString("Missing Auth Token")))))
-    }
+  def user = AuthenticatedAction.async { authedRequest =>
+    val charName = authedRequest.verifyResponse.characterName
+    val result = Ok(s"""{ "character": "${charName}", "token": "${authedRequest.accessToken}" } """)
+    
+    Future(result)
   }
 
   def authCallback = Action.async { request =>
@@ -50,11 +42,14 @@ object Application extends Controller {
       codeO.fold {
         Future(BadRequest("Code is missing, not ok"))
       } { authorizationCode =>
-        val authToken = generateAuthToken(authorizationCode)
+        val authToken = generateAuthTokenFromAuthCode(authorizationCode)
 
         authToken.map { token =>
           {
-            val newSession = request.session + ("authenticated", token)
+            val accessSession = request.session + ("authenticated", token.accessToken)
+            val newSession = token.refreshToken.fold(accessSession)(rt => {
+              accessSession + ("refresh", rt)
+            })
             Logger.info(s"New Session authenticated: ${token}")
             Redirect(routes.Application.index()).withSession(newSession)
           }
@@ -77,7 +72,11 @@ object Application extends Controller {
       Routes.javascriptRouter("jsRoutes")(
         routes.javascript.Application.user,
         routes.javascript.Configure.maintenanceStatus,
-        routes.javascript.Configure.reloadSde)).as("text/javascript")
+        routes.javascript.Configure.reloadSde,
+        routes.javascript.Application.inventoryItems,
+        routes.javascript.BlueprintController.materialsForProduct,
+        routes.javascript.Application.logout,
+        routes.javascript.MarketController.jitaPriceForItem)).as("text/javascript")
   }
 
   def configuration = Action { implicit request =>
@@ -95,6 +94,16 @@ object Application extends Controller {
 
     Ok(preloaded).as("text/javascript")
 
+  }
+
+  def inventoryItems = Action { implicit request =>
+    Logger.info("prefetched")
+
+    val inventoryNames = LightweightItem.listInventoryTypes
+
+    val js = Json.toJson(inventoryNames)
+
+    Ok(js)
   }
 
 }

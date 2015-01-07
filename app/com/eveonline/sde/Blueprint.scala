@@ -27,6 +27,23 @@ object Blueprint extends BaseDataset {
     (__ \ "maxProductionLimit").read[Int] and
     (__ \ "activities").read[BlueprintActivities])(Blueprint.apply _)
 
+  override def deleteDataset = {
+    super.deleteDataset
+    def deleter(tableName: String) = {
+      DB.withConnection { implicit c =>
+        val sql = SQL(s"DELETE FROM ${tableName};")
+        sql.execute()
+      }
+    }
+
+    deleter("sde_blueprint_activity")
+    deleter("sde_blueprint_activity_materials")
+    deleter("sde_blueprint_activity_skills")
+    deleter("sde_blueprint_activity_products")
+
+    true
+  }
+
   def create(value: Blueprint) {
     DB.withConnection { implicit c =>
       val sql = SQL(s"""INSERT INTO ${dataSetName} 

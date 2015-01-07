@@ -11,14 +11,14 @@ CREATE TABLE sde_solarsystems (solar_system_id integer primary key,
     solar_system_name varchar(100),
     region_id integer,
     faction_id integer,
-    radius real,
-    luminosity real,
+    radius decimal,
+    luminosity decimal,
     sun_type_id integer,
     constellation_id integer,
-    x real,
-    y real,
-    z real,
-    security real,
+    x decimal,
+    y decimal,
+    z decimal,
+    security decimal,
     security_class varchar(2),
     border boolean,
     constellation boolean,
@@ -30,18 +30,18 @@ CREATE TABLE sde_solarsystems (solar_system_id integer primary key,
     
 CREATE TABLE sde_inventorytypes(
     id integer primary key,
-    base_price real,
-    capacity real,
-    chance_of_duplicating real,
+    base_price decimal,
+    capacity decimal,
+    chance_of_duplicating decimal,
     description text,
     group_id integer,
     market_group_id integer,
-    mass real,
+    mass decimal,
     portion_size integer,
     published integer,
     race_id integer,
     name varchar(100),
-    volume real);
+    volume decimal);
     
 CREATE TABLE sde_blueprint(
     id integer primary key,
@@ -72,12 +72,10 @@ CREATE TABLE sde_blueprint_activity_products(
     blueprint_activity_id integer,
     type_id integer,
     quantity integer,
-    probability real
+    probability decimal
 );
 
 -- need to create an index on bp_materials.blueprint
-
-CREATE TABLE sde_blueprint_
     
 # --- !Downs
 

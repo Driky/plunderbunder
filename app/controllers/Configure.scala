@@ -16,16 +16,16 @@ object Configure extends Controller {
     Ok(views.html.configure())
   }
 
-  case class SdeMaintenaceLog(dataSet: String, lastImport: DateTime)
+  case class SdeMaintenanceLog(dataSet: String, lastImport: DateTime)
 
-  implicit val sdeMaintenaceLogFormat = Json.format[SdeMaintenaceLog]
+  implicit val sdeMaintenanceLogFormat = Json.format[SdeMaintenanceLog]
 
   def getLastMaintenanceStatus = {
     DB.withConnection { implicit c =>
       val sql = SQL("SELECT data_set, last_import FROM sde_maintenance;")
 
       val result = sql().map { row =>
-        SdeMaintenaceLog(
+        SdeMaintenanceLog(
           row[String]("data_set"),
           row[DateTime]("last_import"))
       }.toList
@@ -34,7 +34,7 @@ object Configure extends Controller {
     }
   }
 
-  def maintenanceStatus = Action { implicit request =>
+  def maintenanceStatus = AuthenticatedAction { implicit request =>
     val result = Json.toJson(getLastMaintenanceStatus)
     Ok(result)
   }
@@ -110,7 +110,7 @@ object Configure extends Controller {
     Json.parse(dataContents)
   }
 
-  def reloadSde = Action { implicit request =>
+  def reloadSde = AuthenticatedAction { implicit request =>
     reloadRegions
     reloadSolarSystems
     reloadInventoryTypes

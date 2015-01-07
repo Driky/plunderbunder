@@ -3,7 +3,13 @@ package com.eveonline.crest
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
-case class VerifyResponse(expiresOn: String, characterName: String, scopes: String, characterOwnerHash: String, characterID: Long, tokenType: String) {
+case class VerifyResponse(
+  expiresOn: String,
+  characterName: String,
+  scopes: String,
+  characterOwnerHash: String,
+  characterID: Long,
+  tokenType: String) {
 
 }
 

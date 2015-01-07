@@ -22,3 +22,9 @@ GET     /assets/*file               	controllers.Assets.at(path="/public", file)
 GET 	/routes/a						controllers.Application.assetRoutes
 GET		/routes/j						controllers.Application.jsRoutes
 GET		/js/config						controllers.Application.configuration
+
+GET		/lookup/items					controllers.Application.inventoryItems
+
+GET		/bom/:productID					controllers.BlueprintController.materialsForProduct(productID:Long)
+
+GET		/market/jita/:itemID			controllers.MarketController.jitaPriceForItem(itemID: Long)
