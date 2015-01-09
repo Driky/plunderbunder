@@ -137,11 +137,12 @@ BillOfMaterialsEntry = React.createClass
             td { style: { textAlign: 'right' } }, @props.quantity
             td {}, @props.name
             td { style: { textAlign: 'right' } }, @props.volume
-            td {}, @props.materialID
+            td { style: { textAlign: 'center' } }, @props.materialID
             td { style: { textAlign: 'right' } }, @state.jitaPrice.toLocaleString()
             td { style: { textAlign: 'right' } }, @state.jitaSplit.toLocaleString()
         ]
-    componentDidMount: ->
+        
+    getJitaPricing: ->
         jitaPriceURL = jsRoutes.controllers.MarketController.jitaPriceForItem(@props.materialID)
         $.ajax jitaPriceURL
         .done ((result) ->
@@ -149,16 +150,60 @@ BillOfMaterialsEntry = React.createClass
             cost = result.sellPrice * @props.quantity
             splitCost = split * @props.quantity
             this.setState { jitaPrice: cost, jitaSplit: splitCost}
+            
+            @props.addCosts(cost, splitCost)
+            
         ).bind(this)
         .fail((jqXHR, textStatus, errorThrown) ->
             this.setState { jitaPrice: 'n/a', jitaSplit: 'n/a'}
         )
+        
+        
+    componentDidMount: ->
+        this.getJitaPricing()
+        true
+        
+    componentWillReceiveProps: (nextProps) ->
+        @setState { jitaPrice: NaN, jitaSplit: NaN }
+        this.getJitaPricing()
+        true
+        
+BillOfMaterialsFooter = React.createClass
+    getInitialState: -> {
+        totalJita: 0
+        totalJitaSplit: 0
+    }
 
+    addCosts: (jitaCost, jitaSplitCost) ->
+        jitaTotal = @state.totalJita + jitaCost
+        jitaSplitTotal = @state.totalJitaSplit + jitaSplitCost
+        @setState {
+            totalJita: jitaTotal
+            totalJitaSplit: jitaSplitTotal
+        }
+    
+    clearCosts: ->
+        @setState {
+            totalJita: 0
+            totalJitaSplit: 0
+        }
+    
+    render: ->
+        tr {}, [
+            th { }, "Total"
+            th { colSpan: 3}, ""
+            th { style: { textAlign: 'right' } }, @state.totalJita.toLocaleString()
+            th { style: { textAlign: 'right' } }, @state.totalJitaSplit.toLocaleString()
+        ]
+        
 BlueprintDetails = React.createClass
     getInitialState: ->
         {
             billOfMaterials: []
         }
+        
+    addCosts: (jitaCost, jitaSplitCost) ->
+        @refs.bomFooter.addCosts(jitaCost, jitaSplitCost)
 
     loadBillOfMaterials: (itemID) ->
         bomURL = jsRoutes.controllers.BlueprintController.materialsForProduct(itemID)
@@ -166,7 +211,11 @@ BlueprintDetails = React.createClass
         .done ((result) ->
             # Assuming any 200 is success
             # alert result
-            @setState { billOfMaterials: result }
+            @setState { 
+                billOfMaterials: result 
+                totalJita: 0
+                totalJitaSplit: 0
+            }
         ).bind(this)
         .fail ((jqXHR, textStatus, errorThrown) ->
             resultCode = jqXHR.status
@@ -175,22 +224,27 @@ BlueprintDetails = React.createClass
     
     render: ->
         bomeFactory = React.createFactory BillOfMaterialsEntry
+        bomfFactory = React.createFactory BillOfMaterialsFooter
+        
         if (@state.billOfMaterials.length > 0)
+            ac = @addCosts
             div { className: 'row' }, [
-                div { className: 'col-md-6' }, [
+                div { className: 'col-md-8' }, [
                     table { className: 'table' }, [
                         tr {}, [
-                            th {}, "Quantity"
+                            th { style: { textAlign: 'center' } }, "Quantity"
                             th {}, "Item"
-                            th {}, "Volume"
-                            th {}, "Item ID"
-                            th {}, "Jita Sell"
-                            th {}, "Jita Split"
+                            th { style: { textAlign: 'center' } }, "Volume"
+                            th { style: { textAlign: 'center' } }, "Item ID"
+                            th { style: { textAlign: 'center' } }, "Jita Sell"
+                            th { style: { textAlign: 'center' } }, "Jita Split"
                         ]
                         tbody {}, [
                             @state.billOfMaterials.map (row) ->
+                                row.addCosts = ac
                                 bomeFactory row, null
                         ]
+                        bomfFactory { ref: 'bomFooter'}, null
                     ]
                 ]
             ]

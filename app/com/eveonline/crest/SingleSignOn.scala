@@ -63,7 +63,7 @@ object SingleSignOn {
           case JsSuccess(tr, _) => SignOnTokens(tr.accessToken, tr.refreshToken)
         }
       } else {
-        throw new Exception(s"Error during request: ${response.status}")
+        throw new Exception(s"Error during request: ${response.status}\n${response.body}\n")
       }
     }
   }
@@ -108,7 +108,7 @@ object SingleSignOn {
           }
         }
       } else {
-        throw new Exception(s"Error during request ${response.status}")
+        throw new Exception(s"Error during request ${response.status}\n${response.body}\n")
       }
     }
   }

@@ -1,6 +1,7 @@
 package controllers
 
 import play.api._
+
 import play.api.mvc._
 import play.api.mvc.Results._
 import play.api.libs.json._
@@ -10,6 +11,7 @@ import scala.concurrent.Future
 
 import com.eveonline.crest._
 import com.eveonline.crest.SingleSignOn._
+import com.eveonline.crest.VerifyResponse
 
 case class AuthenticatedRequest[A](
   request: Request[A],
@@ -24,7 +26,15 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
     })({
       token =>
         // verify then continue
-        val verifiedResult = verifyAuthToken(token)
+
+        // Offline mode is mainly for development purposes
+        val offline = Play.current.configuration.getBoolean("development.offline").getOrElse(false)
+        
+        val verifiedResult = if (!offline) {
+          verifyAuthToken(token)
+        } else {
+          Future(VerifyResponse("n/a", "Offline User", "all", "hash", 0, "offline"))
+        }
 
         verifiedResult.map(res => {
           val ar = AuthenticatedRequest(request, res, token)

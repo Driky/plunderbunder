@@ -17,7 +17,7 @@ object LightweightItem {
       val sql = SQL(s"""SELECT id, name 
         FROM ${InventoryType.dataSetName}""")
 
-      sql().map { row => LightweightItem(row[String]("name"), row[Long]("id")) } toList
+      sql().map { row => LightweightItem(row[String]("name"), row[Long]("id")) }.toList
     }
   }
   
