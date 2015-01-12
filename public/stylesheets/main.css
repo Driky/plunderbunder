@@ -53,3 +53,15 @@ body {
 .twitter-typeahead{ float:left; width:100%}
 
 .bottom7 { margin-bottom:7px; }
+
+.raw-material-item {
+	background-color: #dff0d8
+}
+
+.buildable-material-item {
+	background-color: #fcf8e3
+}
+
+.child-material-item {
+	background-color: #ededed
+}

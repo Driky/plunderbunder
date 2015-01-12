@@ -16,12 +16,28 @@ import scala.language.postfixOps
 
 object BlueprintController extends Controller {
 
-  case class BillOfMaterials(blueprintID: Long, materialID: Long, quantity: Int, name: String, volume: BigDecimal)
-  
-  def materialsForProduct(productID: Long) = AuthenticatedAction { 
-    implicit val bomFormat = Json.format[BillOfMaterials]
+  case class BillOfMaterials(blueprintID: Long, materialID: Long, quantity: Int, name: String, volume: BigDecimal, materialBlueprint: Option[Long])
 
-    val result = DB.withConnection { implicit c =>
+  def blueprintForItem(itemID: Long) = {
+    DB.withConnection { implicit c =>
+      val sql = SQL("""
+        SELECT blueprint_id FROM SDE_BLUEPRINT_ACTIVITY_PRODUCTS product
+          left join sde_blueprint_activity activity on activity.id=product.blueprint_activity_id
+          left join sde_blueprint blueprint on blueprint.id=activity.blueprint_id
+         WHERE product.TYPE_ID = {productID};""").on('productID -> itemID)
+
+      sql().map { row =>
+        {
+          val bpid = row[Long]("blueprint_id")
+          Logger.info("Found + " + bpid.toString)
+          bpid
+        }
+      }.headOption
+    }
+  }
+
+  def baseMaterialsForProduct(productID: Long) = {
+    DB.withConnection { implicit c =>
       val sql = SQL("""SELECT blueprint.id as blueprint_id, material.type_id as material_id, material.quantity, item.name, item.volume
       FROM sde_blueprint blueprint
        LEFT JOIN sde_blueprint_activity activity 
@@ -39,18 +55,27 @@ object BlueprintController extends Controller {
 
       sql().map { row =>
         {
+          val materialID = row[Long]("SDE_BLUEPRINT_ACTIVITY_MATERIALS.TYPE_ID")
+          val materialBlueprint = blueprintForItem(materialID)
           BillOfMaterials(
             row[Long]("SDE_BLUEPRINT.ID"),
-            row[Long]("SDE_BLUEPRINT_ACTIVITY_MATERIALS.TYPE_ID"),
+            materialID,
             row[Int]("quantity"),
             row[String]("name"),
-            row[BigDecimal]("volume"))
+            row[BigDecimal]("volume"),
+            materialBlueprint)
         }
       } toList
     }
-    
-    val response = Json.toJson(result)
-    
+  }
+
+  def materialsForProduct(productID: Long) = AuthenticatedAction {
+    implicit val bomFormat = Json.format[BillOfMaterials]
+
+    val baseMaterials = baseMaterialsForProduct(productID)
+
+    val response = Json.toJson(baseMaterials)
+
     Ok(response)
   }
 }

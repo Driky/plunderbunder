@@ -33,6 +33,7 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
         val verifiedResult = if (!offline) {
           verifyAuthToken(token)
         } else {
+          Logger.info("Faking the verification")
           Future(VerifyResponse("n/a", "Offline User", "all", "hash", 0, "offline"))
         }
 
