@@ -46,8 +46,8 @@ object MarketController extends Controller {
 
     val theForgeID = 10000002
 
-    val orderSells = RegionalMarketOrders.regionalSellOrders(theForgeID, itemID, request.accessToken)
-    val orderBuys = RegionalMarketOrders.regionalBuyOrders(theForgeID, itemID, request.accessToken)
+    val orderSells = RegionalMarketOrders.regionalSellOrders(theForgeID, itemID, request.authenticationProfile.accessToken)
+    val orderBuys = RegionalMarketOrders.regionalBuyOrders(theForgeID, itemID, request.authenticationProfile.accessToken)
 
     val cnapMinSell = reducedCnapOrders(orderSells, (a, b) => if (a.price < b.price) a else b)
     val cnapMaxBuy = reducedCnapOrders(orderBuys, (a, b) => if (a.price > b.price) a else b)

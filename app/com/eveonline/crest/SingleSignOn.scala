@@ -95,7 +95,7 @@ object SingleSignOn {
               throw new Exception(e.toString())
             }
             case JsSuccess(vr, _) => {
-              Logger.debug(s"Verified good token: ${authToken}")
+              Logger.debug(s"Verified good token: ${authToken}!")
               vr
             }
           }

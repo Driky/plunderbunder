@@ -10,8 +10,8 @@ GET		/configure/status/maintenance	controllers.Configure.maintenanceStatus
 GET		/configure/reload				controllers.Configure.reloadSde
 
 # SSO
-GET		/auth/result					controllers.Application.authCallback
-GET 	/logout							controllers.Application.logout
+GET		/auth/result					controllers.Authentication.authCallback
+GET 	/logout							controllers.Authentication.logout
 
 GET		/user							controllers.Application.user
 

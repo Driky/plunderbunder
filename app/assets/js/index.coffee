@@ -38,7 +38,7 @@ LoginButton = React.createClass
                     ]
                     ul { key: 'lb-dd-mnu', className: 'dropdown-menu', role: 'menu' }, [
                         li { key: 'lb-dd-mnu-lo' }, [
-                            a { key: 'lb-dd-lo-a', href: jsRoutes.controllers.Application.logout().url }, "Log Out"
+                            a { key: 'lb-dd-lo-a', href: jsRoutes.controllers.Authentication.logout().url }, "Log Out"
                         ]
                     ]
 

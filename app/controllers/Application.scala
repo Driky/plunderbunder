@@ -25,42 +25,10 @@ object Application extends Controller {
   }
 
   def user = AuthenticatedAction.async { authedRequest =>
-    val charName = authedRequest.verifyResponse.characterName
-    val result = Ok(s"""{ "character": "${charName}", "token": "${authedRequest.accessToken}" } """)
+    val charName = authedRequest.authenticationProfile.characterName
+    val result = Ok(s"""{ "character": "${charName}", "token": "${authedRequest.authenticationProfile.accessToken}" } """)
     
     Future(result)
-  }
-
-  def authCallback = Action.async { request =>
-
-    val codeO = request.getQueryString("code")
-    val stateO = request.getQueryString("state")
-
-    stateO.fold {
-      Future(BadRequest("State is missing, not ok"))
-    } { state =>
-      codeO.fold {
-        Future(BadRequest("Code is missing, not ok"))
-      } { authorizationCode =>
-        val authToken = generateAuthTokenFromAuthCode(authorizationCode)
-
-        authToken.map { token =>
-          {
-            val accessSession = request.session + ("authenticated", token.accessToken)
-            val newSession = token.refreshToken.fold(accessSession)(rt => {
-              accessSession + ("refresh", rt)
-            })
-            Logger.info(s"New Session authenticated: ${token}")
-            Redirect(routes.Application.index()).withSession(newSession)
-          }
-        }
-
-      }
-    }
-  }
-
-  def logout = Action { request =>
-    Redirect(routes.Application.index()).withNewSession
   }
 
   def assetRoutes = Action { implicit request =>
@@ -75,7 +43,7 @@ object Application extends Controller {
         routes.javascript.Configure.reloadSde,
         routes.javascript.Application.inventoryItems,
         routes.javascript.BlueprintController.materialsForProduct,
-        routes.javascript.Application.logout,
+        routes.javascript.Authentication.logout,
         routes.javascript.MarketController.jitaPriceForItem)).as("text/javascript")
   }
 
