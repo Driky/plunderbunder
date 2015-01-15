@@ -18,9 +18,9 @@ dist
 activator-launch-1.2.12.jar
 activator.bat
 data
-sde_scripts/json
-sde_scripts/psv
-sde_scripts/sde
+sde_scripts/json*
+sde_scripts/psv*
+sde_scripts/sde*
 sde_scripts/venv
 .cache
 activator
