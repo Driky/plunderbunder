@@ -152,12 +152,35 @@ BillOfMaterialMfgPrice = React.createClass
             amt += cost
             
         @setState { amount: amt }
+        
+    clearCost: ->
+        @setState { amount: 0 }
     
     render: ->
         if (isNaN @state.amount)
             td { key: 'mfgtd' }, null
         else
             td { key: 'mfgtd' }, @state.amount.toLocaleString()
+
+
+MaterialEfficiencyInput = React.createClass
+    efficiencyChanged: (event) ->
+        newValue = event.target.value  
+        @props.onChange newValue
+
+    render: ->
+        input { 
+            type: 'text'
+            className: 'form-control'
+            placeholder: '00'
+            'aria-describedby': @props.key + 'lbl'
+            style: {
+                borderRadius: '4px'
+            }
+            maxLength: 2
+            onChange: @efficiencyChanged
+            value: @props.efficiency
+        }, null
 
 BillOfMaterialsEntry = React.createClass
     getInitialState: ->
@@ -166,6 +189,7 @@ BillOfMaterialsEntry = React.createClass
             jitaSplit: NaN
             subMaterials: []
             keyfix: Math.random()
+            materialEfficiency: 0
         }
 
     getSubMaterialsClick: ->
@@ -184,15 +208,16 @@ BillOfMaterialsEntry = React.createClass
         )
 
     addMfgCosts: (a,b) ->
-        r = @refs
-        m = r.mfg
-        c = m.addCost
-        c(b)
-        # @refs.mfg.addCost(b)
+        r = @refs.mfg.addCost b
+
+    updateMaterialEfficiency: (value) ->
+        @refs.mfg.clearCost()
+        @setState { materialEfficiency: value }
 
     render: ->
         bomeFactory = React.createFactory BillOfMaterialsEntry
         bommFactory = React.createFactory BillOfMaterialMfgPrice
+        meFactory = React.createFactory MaterialEfficiencyInput
         ac = @addMfgCosts
         rowClass = ''
         if (@props.materialBlueprint)
@@ -203,35 +228,61 @@ BillOfMaterialsEntry = React.createClass
         getSubMaterials = null
         if (@props.materialBlueprint)
             getSubMaterials = td { key:@state.keyfix + '-subm-srch' }, [
-                button { key:@state.keyfix + '-subm-btn', type: 'submit', ref: 'itemSearchButton', className: 'btn btn-warning btn-sm', onClick: @getSubMaterialsClick }, [
+                button { 
+                    key:@state.keyfix + '-subm-btn'
+                    type: 'submit'
+                    ref: 'itemSearchButton' 
+                    className: 'btn btn-warning btn-sm'
+                    onClick: @getSubMaterialsClick
+                }, [
                     span { key:@state.keyfix + '-subm-icn', className: "glyphicon glyphicon-wrench" }, null
                 ]
 
+            ]
+            materialEfficiency = div { 
+                className: 'input-group input-group-sm',
+                style: {
+                    width: '2.5em'
+                }
+            }, [
+                meFactory { 
+                    key: 'me'
+                    efficiency: @state.materialEfficiency
+                    onChange: @updateMaterialEfficiency
+                }, null
             ]
         else
             if (@props.isChild)
                 rowClass = 'child-material-item'
             getSubMaterials = td { key:@state.keyfix + '-subm' }, null
+            materialEfficiency = ""
 
         q = @props.quantity
+        me = Math.pow(0.99, @state.materialEfficiency)
+        
         if (@state.subMaterials.length > 0)
             subMaterials = @state.subMaterials.map (row) ->
                 row.addCosts = ac
                 row.isChild = true
-                row.quantity = row.quantity * q
+                row.quantityModifier = (q * me)
                 row.key = row.materialID
                 bomeFactory row, null
         else
             subMaterials = null
-            
+        
+        displayableQuantity = @props.quantity
+        if (@props.quantityModifier)
+            displayableQuantity = Math.round(displayableQuantity * @props.quantityModifier)
+        
         actualChildren = [
-            td { key: 'q', style: { textAlign: 'right' } }, @props.quantity
+            td { key: 'q', style: { textAlign: 'right' } }, displayableQuantity
             td { key: 'n' }, @props.name
             td { key: 'v', style: { textAlign: 'right' } }, @props.volume
             td { key: 'matl', style: { textAlign: 'center' } }, @props.materialID
             td { key: 'jsl', style: { textAlign: 'right' } }, @state.jitaPrice.toLocaleString()
             td { key: 'jspl', style: { textAlign: 'right' } }, @state.jitaSplit.toLocaleString()
             getSubMaterials
+            td { key: 'me'}, materialEfficiency
             bommFactory { key: 'mfg', ref: 'mfg' }, null
         ]
         
@@ -251,8 +302,14 @@ BillOfMaterialsEntry = React.createClass
         $.ajax jitaPriceURL
         .done ((result) ->
             split = Math.ceil((result.buyPrice + result.sellPrice) / 2)
-            cost = result.sellPrice * @props.quantity
-            splitCost = split * @props.quantity
+            
+            displayableQuantity = @props.quantity
+            
+            if (@props.quantityModifier)
+                displayableQuantity = Math.round(displayableQuantity * @props.quantityModifier)
+                
+            cost = result.sellPrice * displayableQuantity
+            splitCost = split * displayableQuantity
             this.setState { jitaPrice: cost, jitaSplit: splitCost }
             ac(cost, splitCost)
 
@@ -337,7 +394,7 @@ BlueprintDetails = React.createClass
             ac = @addCosts
             i = 0
             div { key: 'bomrow' + Math.random(), className: 'row' }, [
-                div { key: 'bomcol', className: 'col-md-8' }, [
+                div { key: 'bomcol', className: 'col-md-10' }, [
                     table { key: 'bomtable', className: 'table' }, [
                         tr { key: 'bomheader' }, [
                             th { key: 'bomheader-q', style: { textAlign: 'center' } }, "Quantity"
@@ -346,15 +403,15 @@ BlueprintDetails = React.createClass
                             th { key: 'bomheader-iid', style: { textAlign: 'center' } }, "Item ID"
                             th { key: 'bomheader-jsl', style: { textAlign: 'center' } }, "Jita Sell"
                             th { key: 'bomheader-jspl', style: { textAlign: 'center' } }, "Jita Split"
+                            th { }, null
+                            th { }, "ME %"
                         ]
-                        # tbody { key: 'bombody' }, [
                         @state.billOfMaterials.map (row) ->
                             row.addCosts = ac
                             row.key = 'br-' + i
+                            row.ref = 'bome-' + i
                             i += 1
-                            # row.isChild = false
                             bomeFactory row, null
-                        # ]
                         bomfFactory { key: @state.keyfix + '-bomf', ref: 'bomFooter'}, null
                     ]
                 ]
