@@ -3,7 +3,30 @@ Kartel
 
 This is a web-app to interact with the EVE Online CREST API.
 
-It doesn't have any particular goals yet.
+Functionality
+=============
+
+Build or Buy Manufacturing
+--------------------------
+
+Take a blueprint and determine if the submaterials (eg. T2 components) are better off built
+or purchased. Prices are displayed from Jita sell orders and Jita split (lowest sell + highest buy) / 2
+
+**Planned Features**
+
+  * Supply ME factor for blueprints (who builds off of unresearched BPOs?)
+  * Add alternate regions for pricing
+  
+Roadmap
+=======
+
+  * What uses what?
+    * What use do certain subcomponents have (eg. High Tech Datachip, Carbon)
+  * Does it reprocess?
+    * Find all the crap in hangars and create a list of everything that has a 
+      reprocess value within *x*% of sell price
+    * Will account for Scrapmetal processing skill
+  * Which items are trading below the reprocessed value
 
 Transforming the EVE SDE
 ========================
@@ -28,4 +51,4 @@ This will output the files in a pipe delimited format (safer than csv) which can
 from the windows machine to your friendly *nix based platform.
 
 From here you can run the `sde_to_json.py` script to convert all of the disparate data sources into 
-one unified format. [Currently only the YAML and MSSQL conversions are working]
+one unified format. [This has been tested on both Rhea and Proteus SDE data sets]
