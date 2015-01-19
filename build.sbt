@@ -16,7 +16,8 @@ libraryDependencies ++= Seq(
   "org.webjars" % "react" % "0.12.1",
   "org.webjars" % "bootstrap" % "3.3.1",
   "org.webjars" % "typeaheadjs" % "0.10.5-1",
-  "org.webjars" % "jquery" % "2.1.3"
+  "org.webjars" % "jquery" % "2.1.3",
+  "org.webjars" % "requirejs" % "2.1.15"
 )
 
 jacoco.settings

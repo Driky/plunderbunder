@@ -2,9 +2,15 @@
 @()
 
 @main("Space Biznas Setup") {
+	<script 
+    	type="text/javascript" 
+    	src="@routes.Assets.at("lib/requirejs/require.js")" 
+    	data-main="@routes.Assets.at("js/configure")" 
+    	defer >
+    </script>
+	
+	
     <div id="content">
     
     </div>
-	
-	<script src="@routes.Assets.at("js/configure.js")"></script>
 }
