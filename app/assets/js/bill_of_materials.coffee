@@ -27,14 +27,14 @@ define ['react'], (React) ->
                 resultCode = jqXHR.status
                 alert "Error thrown: " + errorThrown
             )
-
+            
         addMfgCosts: (a,b) ->
             r = @refs.mfg.addCost b
-
+            
         updateMaterialEfficiency: (value) ->
             @refs.mfg.clearCost()
             @setState { materialEfficiency: value }
-
+            
         render: ->
             bomeFactory = React.createFactory BillOfMaterialsEntry
             bommFactory = React.createFactory BillOfMaterialMfgPrice
@@ -45,7 +45,7 @@ define ['react'], (React) ->
                 rowClass = 'buildable-material-item'
             else
                 rowClass = 'raw-material-item'
-
+                
             getSubMaterials = null
             if (@props.materialBlueprint)
                 getSubMaterials = td { key:@state.keyfix + '-subm-srch' }, [
@@ -58,7 +58,7 @@ define ['react'], (React) ->
                     }, [
                         span { key:@state.keyfix + '-subm-icn', className: "glyphicon glyphicon-wrench" }, null
                     ]
-
+                    
                 ]
                 materialEfficiency = div { 
                     className: 'input-group input-group-sm'
@@ -117,16 +117,16 @@ define ['react'], (React) ->
                 retVal = tbody { key: 'bomerow' }, result
                 
             retVal
-
+            
         getJitaPricing: ->
             jitaPriceURL = jsRoutes.controllers.MarketController.jitaPriceForItem(@props.materialID)
             ac = @props.addCosts
             $.ajax jitaPriceURL
             .done ((result) ->
                 split = Math.ceil((result.buyPrice + result.sellPrice) / 2)
-            
+                
                 displayableQuantity = @props.quantity
-            
+                
                 if (@props.quantityModifier)
                     displayableQuantity = Math.round(displayableQuantity * @props.quantityModifier)
                 
@@ -134,17 +134,16 @@ define ['react'], (React) ->
                 splitCost = split * displayableQuantity
                 this.setState { jitaPrice: cost, jitaSplit: splitCost }
                 ac(cost, splitCost)
-
+                
             ).bind(this)
             .fail((jqXHR, textStatus, errorThrown) ->
                 this.setState { jitaPrice: 'n/a', jitaSplit: 'n/a'}
             )
-
-
+            
         componentDidMount: ->
             this.getJitaPricing()
             true
-
+            
         componentWillReceiveProps: (nextProps) ->
             @setState {
                 jitaPrice: NaN
@@ -153,13 +152,13 @@ define ['react'], (React) ->
             }
             this.getJitaPricing()
             true
-
+            
     BillOfMaterialMfgPrice = React.createClass
         getInitialState: ->
             {
                 amount: NaN
             }
-    
+            
         addCost: (cost) ->
             amt = @state.amount
             if (isNaN(amt))
@@ -168,22 +167,21 @@ define ['react'], (React) ->
                 amt += cost
             
             @setState { amount: amt }
-        
+            
         clearCost: ->
             @setState { amount: 0 }
-    
+            
         render: ->
             if (isNaN @state.amount)
                 td { key: 'mfgtd' }, null
             else
                 td { key: 'mfgtd' }, @state.amount.toLocaleString()
-
-
+                
     MaterialEfficiencyInput = React.createClass
         efficiencyChanged: (event) ->
             newValue = event.target.value  
             @props.onChange newValue
-
+            
         render: ->
             input { 
                 type: 'text'
@@ -197,15 +195,14 @@ define ['react'], (React) ->
                 onChange: @efficiencyChanged
                 value: @props.efficiency
             }, null
-
-
+            
     BillOfMaterialsFooter = React.createClass
         getInitialState: -> 
             {
                 totalJita: 0
                 totalJitaSplit: 0
             }
-    
+            
         addCosts: (jitaCost, jitaSplitCost) ->
             jitaTotal = @state.totalJita + jitaCost
             jitaSplitTotal = @state.totalJitaSplit + jitaSplitCost
@@ -213,13 +210,13 @@ define ['react'], (React) ->
                 totalJita: jitaTotal
                 totalJitaSplit: jitaSplitTotal
             }
-
+            
         clearCosts: ->
             @setState {
                 totalJita: 0
                 totalJitaSplit: 0
             }
-
+            
         render: ->
             tr { key: 'bomf-row' }, [
                 th { key: 'bomf-ttl' }, "Total"
@@ -227,17 +224,25 @@ define ['react'], (React) ->
                 th { key: 'bomf-ttl-jsl', style: { textAlign: 'right' } }, @state.totalJita.toLocaleString()
                 th { key: 'bomf-ttl-jspl', style: { textAlign: 'right' } }, @state.totalJitaSplit.toLocaleString()
             ]
-    
-    
+            
+    BillOfMaterialsTitle = React.createClass
+        render: ->
+            div { key: 'bomtitle', className: 'row' }, [
+                div { key: 'tcol', className: 'col-md-4' }, [
+                    h2 { key: 'th2' }, @props.itemName
+                
+                ]
+            ]
+            
     BlueprintDetails = React.createClass
         getInitialState: ->
             {
                 billOfMaterials: []
             }
-
+            
         addCosts: (jitaCost, jitaSplitCost) ->
             @refs.bomFooter.addCosts(jitaCost, jitaSplitCost)
-
+            
         loadBillOfMaterials: (itemID, itemName) ->
             bomURL = jsRoutes.controllers.BlueprintController.materialsForProduct(itemID)
             $.ajax bomURL
@@ -254,21 +259,17 @@ define ['react'], (React) ->
                 resultCode = jqXHR.status
                 alert "Error thrown: " + errorThrown
             )
-
+            
         render: ->
             bomeFactory = React.createFactory BillOfMaterialsEntry
             bomfFactory = React.createFactory BillOfMaterialsFooter
-
+            bomtFactory = React.createFactory BillOfMaterialsTitle
+            
             if (@state.billOfMaterials.length > 0)
                 ac = @addCosts
                 i = 0
                 div { key: 'bom' }, [
-                    div { key: 'bomtitle', className: 'row' }, [
-                        div { key: 'tcol', className: 'col-md-4' }, [
-                            h2 { key: 'th2' }, @state.itemName
-                        
-                        ]
-                    ]
+                    bomtFactory { key: 'ttl', itemName: @state.itemName }, null
                     div { key: 'bomrow' + Math.random(), className: 'row' }, [
                         div { key: 'bomcol', className: 'col-md-10' }, [
                             table { key: 'bomtable', className: 'table' }, [

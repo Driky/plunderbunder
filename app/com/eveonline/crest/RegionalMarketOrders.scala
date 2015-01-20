@@ -53,14 +53,36 @@ case class FakeResponse(fakeBody: String) extends WSResponse {
 object RegionalMarketOrders {
 
   def crestRequest(url: String, accessToken: String) = {
-    val request = WS.url(url)
-      .withHeaders("Authorization" -> s"Bearer ${accessToken}")
 
-    // TODO: add version
-    // TODO: add content-type
+    val config = current.configuration
+    val offlineMode = config.getBoolean("development.offline").getOrElse(false)
 
-    // TODO: support non-get requests
-    request.get()
+    if (!offlineMode) {
+      val request = WS.url(url)
+        .withHeaders("Authorization" -> s"Bearer ${accessToken}")
+
+      // TODO: add version
+      // TODO: add content-type
+
+      // TODO: support non-get requests
+      request.get()
+    } else {
+      Future(FakeResponse("""{
+        "totalCount": 1,
+        "items": [
+            {
+              "href": "http://offline.com/not/there",
+              "location": {
+                "href": "http://offline.com/not/there/60003760/",
+                "name": "FakeStation IV - Caldari Bootcamp"
+              },
+              "volume": 1000,
+              "duration": 300,
+              "price": 1234
+            }
+        ]
+        }"""))
+    }
   }
 
   val crestEndpoint = "https://crest-tq.eveonline.com"
