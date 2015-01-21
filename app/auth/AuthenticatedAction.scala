@@ -1,4 +1,4 @@
-package controllers
+package auth
 
 import play.api._
 
@@ -14,6 +14,11 @@ import com.eveonline.crest.SingleSignOn._
 import com.eveonline.crest.VerifyResponse
 import org.joda.time.DateTime
 
+import anorm._
+import play.api.db.DB
+
+import play.api.Play.current
+
 case class AuthenticatedRequest[A](
   request: Request[A],
   authenticationProfile: AuthenticationProfile) extends WrappedRequest(request) {}
@@ -22,10 +27,11 @@ case class AuthenticationProfile(
   accessToken: String,
   accessExpiration: DateTime,
   refreshToken: Option[String],
-  characterName: String) {
+  characterName: String,
+  userID: Long) {
 
   def copyWithAccess(newAccessToken: String, newAccessExpiration: DateTime) = {
-    AuthenticationProfile(newAccessToken, newAccessExpiration, refreshToken, characterName)
+    AuthenticationProfile(newAccessToken, newAccessExpiration, refreshToken, characterName, userID)
   }
 }
 object AuthenticationProfile {
@@ -46,7 +52,7 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
 
         authProfile match {
           case JsSuccess(profile, _) => {
- 
+
             val isAccessValid = DateTime.now().isBefore(profile.accessExpiration)
 
             if (isAccessValid) {
@@ -85,6 +91,26 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
 
   def unauthorizedFuture = Future(Unauthorized(JsObject(Seq("error" -> JsString("Token Expired")))))
 
+  def createUserIfApplicable(verify: VerifyResponse): Option[Long] = {
+    DB.withConnection { implicit c =>
+      val sql = SQL("""SELECT id, eve_id 
+        FROM kartel_users
+        WHERE eve_id={eve_id}""").on('eve_id -> verify.characterID)
+
+      if (sql().length == 0) {
+        val insql = SQL("""INSERT INTO kartel_users
+          (eve_id, character_name)
+          VALUES
+          ({eve_id}, {character_name});
+          """).on('eve_id -> verify.characterID, 'character_name -> verify.characterName)
+
+        insql.executeInsert()
+      } else {
+        sql().map { r => r[Long]("id") }.headOption
+      }
+    }
+  }
+
   def generateAuthTokenFromRefresh[A](request: Request[A], block: (AuthenticatedRequest[A]) => Future[Result]): Future[Result] = {
     val session = request.session
     val ret: Future[Result] = session.get(AuthenticationProfile.sessionKey) match {
@@ -105,7 +131,10 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
                   val verifiedResult = verifyAuthToken(token.accessToken)
 
                   verifiedResult.map(res => {
-                    val newProfile = AuthenticationProfile(token.accessToken, res.expiresOn, token.refreshToken, res.characterName)
+
+                    val userID = createUserIfApplicable(res).getOrElse(0L)
+
+                    val newProfile = AuthenticationProfile(token.accessToken, res.expiresOn, token.refreshToken, res.characterName, userID)
                     val accessSession = session + (AuthenticationProfile.sessionKey -> Json.toJson(newProfile).toString())
                     val ar = AuthenticatedRequest(request, newProfile)
                     block(ar).map(_.withSession(accessSession))

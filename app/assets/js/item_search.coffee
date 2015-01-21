@@ -17,18 +17,18 @@ define ['react'], (React) ->
                 div { key: 'srch-col', className: 'col-md-5' }, [
                     div { key: 'in-grp', className: 'input-group' }, [
                         input {
-                            key: 'srch-inp',
-                            className: 'form-control itemInput',
-                            ref: 'itemSearchInput',
-                            type: 'text',
+                            key: 'srch-inp'
+                            className: 'form-control itemInput'
+                            ref: 'itemSearchInput'
+                            type: 'text'
                             placeholder: 'What are you building?'
                         }, null
                         span { key: 'srch-btn-spn', className: 'input-group-btn' }, [
                             button {
-                                key: 'srch-btn',
-                                type: 'submit',
-                                ref: 'itemSearchButton',
-                                className: 'btn btn-primary',
+                                key: 'srch-btn'
+                                type: 'submit'
+                                ref: 'itemSearchButton'
+                                className: 'btn btn-primary'
                                 onClick: @handleClick
                             }, "Show Details"
                         ]
@@ -52,12 +52,11 @@ define ['react'], (React) ->
 
             itemSearch = $(itemSearchDom)
             itemSearch.typeahead {
-              minLength: 3,
+              minLength: 3
               highlight: true
-            },
-            {
-              name: 'all-items',
-              source: engine.ttAdapter(),
+            }, {
+              name: 'all-items'
+              source: engine.ttAdapter()
               displayKey: 'name'
             }
 

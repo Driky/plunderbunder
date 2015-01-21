@@ -1,6 +1,6 @@
 define ['react'], (React) ->
 
-    { div, h2, button, span, input } = React.DOM
+    { div, h2, button, span, input, label } = React.DOM
     { table, tr, th, td, tbody } = React.DOM
     
     BillOfMaterialsEntry = React.createClass
@@ -92,7 +92,7 @@ define ['react'], (React) ->
             else
                 subMaterials = null
                 
-            displayableQuantity = @props.quantity
+            displayableQuantity = @props.quantity 
             if (@props.quantityModifier)
                 displayableQuantity = Math.round(displayableQuantity * @props.quantityModifier)
                 
@@ -226,11 +226,30 @@ define ['react'], (React) ->
             ]
             
     BillOfMaterialsTitle = React.createClass
+        efficiencyChanged: (event) ->
+            @props.efficiencyChanged(event.target.value)
+            
         render: ->
             div { key: 'bomtitle', className: 'row' }, [
                 div { key: 'tcol', className: 'col-md-4' }, [
                     h2 { key: 'th2' }, @props.itemName
-                
+                ]
+                div { key: 'mecol', className: 'col-md-1 input-group input-group-sm'}, [
+                    label { key: 'melbl', labelFor: 'bow-mein' }, "ME %"
+                    input { 
+                        id: 'bom-mein'
+                        key: 'meinp'
+                        type: 'text'
+                        className: 'form-control'
+                        placeholder: '00'
+                        'aria-describedby': @props.key + 'lbl'
+                        style: {
+                            borderRadius: '4px'
+                        }
+                        maxLength: 2
+                        onChange: @efficiencyChanged
+                        value: @props.efficiency
+                    }, null
                 ]
             ]
             
@@ -238,6 +257,7 @@ define ['react'], (React) ->
         getInitialState: ->
             {
                 billOfMaterials: []
+                materialEfficiency: 0
             }
             
         addCosts: (jitaCost, jitaSplitCost) ->
@@ -260,6 +280,11 @@ define ['react'], (React) ->
                 alert "Error thrown: " + errorThrown
             )
             
+        
+        baseEfficiencyChanged: (newValue) ->
+            # alert 'New Value: ' + newValue
+            @setState { materialEfficiency: newValue }
+        
         render: ->
             bomeFactory = React.createFactory BillOfMaterialsEntry
             bomfFactory = React.createFactory BillOfMaterialsFooter
@@ -268,8 +293,13 @@ define ['react'], (React) ->
             if (@state.billOfMaterials.length > 0)
                 ac = @addCosts
                 i = 0
+                bomMaterialEfficiency = @state.materialEfficiency
                 div { key: 'bom' }, [
-                    bomtFactory { key: 'ttl', itemName: @state.itemName }, null
+                    bomtFactory { 
+                        key: 'ttl'
+                        itemName: @state.itemName 
+                        efficiencyChanged: @baseEfficiencyChanged
+                    }, null
                     div { key: 'bomrow' + Math.random(), className: 'row' }, [
                         div { key: 'bomcol', className: 'col-md-10' }, [
                             table { key: 'bomtable', className: 'table' }, [
@@ -287,6 +317,8 @@ define ['react'], (React) ->
                                     row.addCosts = ac
                                     row.key = 'br-' + i
                                     row.ref = 'bome-' + i
+                                    row.initialMaterialEfficiency = bomMaterialEfficiency
+                                    row.quantityModifier = Math.pow(0.99, bomMaterialEfficiency)
                                     i += 1
                                     bomeFactory row, null
                                 bomfFactory { key: @state.keyfix + '-bomf', ref: 'bomFooter'}, null

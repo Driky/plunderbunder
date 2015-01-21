@@ -16,19 +16,14 @@ import com.eveonline.crest.InvalidTokenException
 
 import play.api.libs.json._
 
+import auth.AuthenticatedAction
+
 object Application extends Controller {
 
   implicit val context = scala.concurrent.ExecutionContext.Implicits.global
 
   def index = Action.async { request =>
     Future(Ok(views.html.index()))
-  }
-
-  def user = AuthenticatedAction.async { authedRequest =>
-    val charName = authedRequest.authenticationProfile.characterName
-    val result = Ok(s"""{ "character": "${charName}", "token": "${authedRequest.authenticationProfile.accessToken}" } """)
-    
-    Future(result)
   }
 
   def assetRoutes = Action { implicit request =>
@@ -38,7 +33,9 @@ object Application extends Controller {
   def jsRoutes = Action { implicit request =>
     Ok(
       Routes.javascriptRouter("jsRoutes")(
-        routes.javascript.Application.user,
+        routes.javascript.User.user,
+        routes.javascript.User.userProfile,
+        routes.javascript.User.updateUserProfile,
         routes.javascript.Configure.maintenanceStatus,
         routes.javascript.Configure.reloadSde,
         routes.javascript.Application.inventoryItems,

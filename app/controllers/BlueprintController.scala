@@ -13,6 +13,7 @@ import play.api.Play.current
 import play.api.libs.json._
 
 import scala.language.postfixOps
+import auth.AuthenticatedAction
 
 object BlueprintController extends Controller {
 

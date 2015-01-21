@@ -2,23 +2,17 @@ package controllers
 
 import play.api._
 import play.api.mvc._
-
 import play.api.Play.current
-
 import anorm._
 import play.api.db.DB
-
 import play.api.Play.current
-
 import play.api.libs.json._
-
 import com.eveonline.crest.RegionalMarketOrders
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import com.eveonline.crest.MarketOrder
 import com.eveonline.crest.MarketOrderLocation
+import auth.AuthenticatedAction
 
 object MarketController extends Controller {
 

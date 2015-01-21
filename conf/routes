@@ -13,7 +13,9 @@ GET		/configure/reload				controllers.Configure.reloadSde
 GET		/auth/result					controllers.Authentication.authCallback
 GET 	/logout							controllers.Authentication.logout
 
-GET		/user							controllers.Application.user
+GET		/user							controllers.User.user
+GET		/user/profile					controllers.User.userProfile
+POST	/user/profile					controllers.User.updateUserProfile
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               	controllers.Assets.at(path="/public", file)

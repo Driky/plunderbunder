@@ -10,6 +10,7 @@ import play.api.db.DB
 import org.joda.time.DateTime
 
 import play.api.libs.json._
+import auth.AuthenticatedAction
 
 object Configure extends Controller {
   def index = Action { implicit request =>

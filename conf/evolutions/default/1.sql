@@ -75,6 +75,15 @@ CREATE TABLE sde_blueprint_activity_products(
     probability decimal
 );
 
+CREATE TABLE kartel_users (
+    id integer primary key auto_increment,
+    eve_id integer,
+    character_name varchar(64),
+    api_key_id integer,
+    api_key_vcode char(64),
+    email_address varchar(255)
+)
+
 -- need to create an index on bp_materials.blueprint
     
 # --- !Downs
@@ -88,3 +97,5 @@ DROP TABLE IF EXISTS sde_blueprint_activity;
 DROP TABLE IF EXISTS sde_blueprint_activity_materials;
 DROP TABLE IF EXISTS sde_blueprint_activity_skills;
 DROP TABLE IF EXISTS sde_blueprint_activity_products;
+
+DROP TABLE IF EXISTS kartel_users
