@@ -1,34 +1,12 @@
-package com.eveonline.crest
+package com.eveonline.crest.requests
 
-import play.api.Play.current
-
-import play.api.libs.ws._
 import play.api.libs.json._
-import play.api.Logger
-
-import org.joda.time.DateTime
-
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.concurrent.Future
 
-case class MarketOrderLocation(
-  href: String,
-  name: String)
-object MarketOrderLocation {
-  implicit val marketOrderLocationFormat = Json.format[MarketOrderLocation]
-}
+import com.eveonline.crest.MarketOrder
 
-case class MarketOrder(
-  href: String,
-  location: MarketOrderLocation,
-  volume: Int,
-  duration: Int,
-  //issued: DateTime,
-  price: Long)
-object MarketOrder {
-  implicit val marketSellOrderFormat = Json.format[MarketOrder]
-}
+
 
 case class MarketOrdersResponse(
   totalCount: Int,
@@ -37,47 +15,12 @@ object MarketOrdersResponse {
   implicit val marketSellOrdersResponseFormat = Json.format[MarketOrdersResponse]
 }
 
-object RegionalMarketOrders {
-
-  def crestRequest(url: String, accessToken: String) = {
-
-    val config = current.configuration
-    val offlineMode = config.getBoolean("development.offline").getOrElse(false)
-
-    if (!offlineMode) {
-      val request = WS.url(url)
-        .withHeaders("Authorization" -> s"Bearer ${accessToken}")
-
-      // TODO: add version
-      // TODO: add content-type
-
-      // TODO: support non-get requests
-      request.get()
-    } else {
-      Future(FakeResponse("""{
-        "totalCount": 1,
-        "items": [
-            {
-              "href": "http://offline.com/not/there",
-              "location": {
-                "href": "http://offline.com/not/there/60003760/",
-                "name": "FakeStation IV - Caldari Bootcamp"
-              },
-              "volume": 1000,
-              "duration": 300,
-              "price": 1234
-            }
-        ]
-        }"""))
-    }
-  }
-
-  val crestEndpoint = "https://crest-tq.eveonline.com"
+object RegionalMarketOrders extends CrestRequest {
 
   def regionalBuyOrders(regionID: Long, itemID: Long, token: String) = {
     val buyOrderUrl = s"${crestEndpoint}/market/${regionID}/orders/buy/?type=${crestEndpoint}/types/${itemID}/"
 
-    val response = crestRequest(buyOrderUrl, token)
+    val response = get(buyOrderUrl, token)
 
     response.flatMap { r =>
       {
@@ -107,7 +50,7 @@ object RegionalMarketOrders {
     // Crawling this URL doesn't really make much sense because the argument isn't obvious 
     val sellOrderUrl = s"${crestEndpoint}/market/${regionID}/orders/sell/?type=${crestEndpoint}/types/${itemID}/"
 
-    val response = crestRequest(sellOrderUrl, token)
+    val response = get(sellOrderUrl, token)
 
     response.flatMap { r =>
       {

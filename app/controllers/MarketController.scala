@@ -7,11 +7,11 @@ import anorm._
 import play.api.db.DB
 import play.api.Play.current
 import play.api.libs.json._
-import com.eveonline.crest.RegionalMarketOrders
+import com.eveonline.crest.requests.RegionalMarketOrders
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.eveonline.crest.MarketOrder
-import com.eveonline.crest.MarketOrderLocation
+import com.eveonline.crest.NamedReference
 import auth.AuthenticatedAction
 
 object MarketController extends Controller {
@@ -28,9 +28,9 @@ object MarketController extends Controller {
 
   case class MarketRates(
     itemID: Long,
-    buyLocation: MarketOrderLocation,
+    buyLocation: NamedReference,
     buyPrice: Long,
-    sellLocation: MarketOrderLocation,
+    sellLocation: NamedReference,
     sellPrice: Long)
   object MarketRates {
     implicit val marketRatesFormat = Json.format[MarketRates]
