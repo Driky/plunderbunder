@@ -75,14 +75,36 @@ CREATE TABLE sde_blueprint_activity_products(
     probability decimal
 );
 
+CREATE TABLE sde_stations(
+    station_id int primary key,
+    constellation_id int,
+    corporation_id int, 
+    docking_cost_per_volume decimal,
+    max_ship_volume_dockable decimal,
+    office_rental_cost int,
+    operation_id int,
+    region_id int,
+    reprocessing_efficiency decimal,
+    reprocessing_hangar_flag int,
+    reprocessing_stations_take decimal,
+    security decimal,
+    solar_system_id int,
+    station_name varchar(255),
+    station_type_id int,
+    x decimal,
+    y decimal,
+    z decimal
+);
+
 CREATE TABLE kartel_users (
     id integer primary key auto_increment,
     eve_id integer,
     character_name varchar(64),
     api_key_id integer,
     api_key_vcode char(64),
+    access_mask integer,
     email_address varchar(255)
-)
+);
 
 -- need to create an index on bp_materials.blueprint
     
@@ -97,5 +119,6 @@ DROP TABLE IF EXISTS sde_blueprint_activity;
 DROP TABLE IF EXISTS sde_blueprint_activity_materials;
 DROP TABLE IF EXISTS sde_blueprint_activity_skills;
 DROP TABLE IF EXISTS sde_blueprint_activity_products;
+DROP TABLE IF EXISTS sde_stations;
 
-DROP TABLE IF EXISTS kartel_users
+DROP TABLE IF EXISTS kartel_users;

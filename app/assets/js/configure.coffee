@@ -64,8 +64,8 @@ require ['react'], (React) ->
     
         render: ->
             button { 
-                type: "button", 
-                className: "btn btn-default", 
+                type: 'button' 
+                className: 'btn btn-default'
                 onClick: @handleClick
             }, "Reload SDE"
     
@@ -73,6 +73,27 @@ require ['react'], (React) ->
             # trigger update
             updateSdeUrl = jsRoutes.controllers.Configure.reloadSde
             $.ajax updateSdeUrl()
+            .done ((result) ->
+                # Assuming any 200 is success
+                x = @props.parent.sdeUpdated()
+            ).bind(this)
+            .fail ((jqXHR, textStatus, errorThrown) ->
+                resultCode = jqXHR.status
+                alert "Error thrown: " + errorThrown
+            )
+        
+    ReloadNullsecStations = React.createClass
+        render: -> 
+            button {
+                type: 'button'
+                className: 'btn btn-default'
+                onClick: @handleClick
+            }, "Reload Contested"
+        
+        handleClick: (event) ->
+            # trigger update
+            updateNullsecUrl = jsRoutes.controllers.Configure.reloadNullsecStations
+            $.ajax updateNullsecUrl()
             .done ((result) ->
                 # Assuming any 200 is success
                 x = @props.parent.sdeUpdated()
@@ -92,9 +113,11 @@ require ['react'], (React) ->
         render: ->
             maintenanceLog = React.createElement MaintenanceStatus, { data: [[]], ref: 'maintenanceLog' }
             reloadSDE = React.createElement ReloadSDE, { parent: this }
+            reloadNullsecStations = React.createElement ReloadNullsecStations, { parent: this }
             div {}, [
                 maintenanceLog,
                 reloadSDE
+                reloadNullsecStations
             ]
         
     masterLayout = React.createElement Master, null

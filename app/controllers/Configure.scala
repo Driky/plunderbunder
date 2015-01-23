@@ -5,12 +5,17 @@ import play.api.mvc._
 
 import play.api.Play.current
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import anorm._
 import play.api.db.DB
 import org.joda.time.DateTime
 
 import play.api.libs.json._
+
 import auth.AuthenticatedAction
+
+import com.eveonline.xmlapi.requests.ConquerableStations
 
 object Configure extends Controller {
   def index = Action { implicit request =>
@@ -73,6 +78,21 @@ object Configure extends Controller {
     }
   }
 
+  def reloadStations = {
+    val jsResult = loadSdeJson("sde_scripts/json/staStations.json")
+    jsResult.validate[List[Station]] match {
+      case JsSuccess(stations, _) => {
+        Station.deleteAll
+        stations.foreach { s => Station.create(s) }
+        Station.updateModificationTime
+        true
+      }
+      case JsError(reason) => {
+        throw new Exception(reason.seq.toString)
+      }
+    }
+  }
+
   def reloadInventoryTypes = {
     val jsResult = loadSdeJson("sde_scripts/json/invTypes.json")
     jsResult.validate[List[InventoryType]] match {
@@ -114,9 +134,23 @@ object Configure extends Controller {
   def reloadSde = AuthenticatedAction { implicit request =>
     reloadRegions
     reloadSolarSystems
+    reloadStations
     reloadInventoryTypes
     reloadBlueprints
 
-    Ok("ok" mkString "\n")
+    Ok(JsObject(Seq("result" -> JsString("ok"))))
+  }
+
+  def updateNullsecStationsFromApi() = {
+    val stationList = ConquerableStations.list
+    stationList.map {
+      _.foreach { _.upsert }
+    }
+  }
+
+  def reloadNullsecStations = AuthenticatedAction { implicit request =>
+    updateNullsecStationsFromApi
+
+    Ok(JsObject(Seq("result" -> JsString("ok"))))
   }
 }

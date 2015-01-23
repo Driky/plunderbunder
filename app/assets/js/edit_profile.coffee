@@ -44,7 +44,9 @@ define ['react'], (React) ->
             userProfileURL.ajax()
             .done ((result) ->
                 if this.isMounted()
-                    @setState { profile: result,  ajaxLoading: false}
+                    console.log('RESULT: ' + JSON.stringify(result))
+                    apiKeyValid = result.accessMask != null
+                    @setState { profile: result,  ajaxLoading: false, apiKeyValid: apiKeyValid }
                 ).bind this
             .fail ((jqXHR, textStatus, errorThrown) ->
                 resultCode = jqXHR.status
@@ -95,6 +97,13 @@ define ['react'], (React) ->
                     .done ((result) ->
                         if this.isMounted()
                             @refs.inp_alert.setState { message: controlName + ' saved', visible: true }
+                            
+                            console.log('SAVE RESULT: ' + JSON.stringify(result))
+                            
+                            if result.keyIsValid
+                                @setState { apiKeyValid: true }
+                            else
+                                @setState { apiKeyValid: false }
                         ).bind this
                     .fail ((jqXHR, textStatus, errorThrown) ->
                         resultCode = jqXHR.status
@@ -106,6 +115,23 @@ define ['react'], (React) ->
         render: ->
             console.log('rendering')
             af = React.createFactory AlertBox
+            
+            apiKeyMessage = div { 
+                key: 'apimsgr'
+                className: 'row'
+            }, [
+                div { 
+                    key: 'apimsgc'
+                    className: 'col-md-6'
+                }, [
+                    div { 
+                        key: 'apimsg'
+                        className: 'alert alert-warning'
+                    }, "API Key is invalid or incomplete"
+                ]
+            ]
+            
+            headsUp = if @state.apiKeyValid == false then apiKeyMessage else div { key: 'fill'}, null
             
             div {
                 key: 'prf'
@@ -119,6 +145,7 @@ define ['react'], (React) ->
                         className: 'col-md-12'
                     }, h1 { key: 'hh1' }, "User Information"
                 ]
+                headsUp
                 div {
                     key: 'keyidrow'
                     className: 'row'

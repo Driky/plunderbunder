@@ -58,6 +58,48 @@ class SdeFormatTests extends Specification {
     "parse a blueprint with time and material research and copying omitted" in {
       testBlueprintWithoutResearch
     }
+
+    "parse a station" in {
+      testBasicStation
+    }
+  }
+
+  def testBasicStation = {
+    val rawJson = """
+      {
+        "constellationID": "20000407",
+        "corporationID": "1000002",
+        "dockingCostPerVolume": "0.0",
+        "maxShipVolumeDockable": "50000000.0",
+        "officeRentalCost": "10000",
+        "operationID": "26",
+        "regionID": "10000033",
+        "reprocessingEfficiency": "0.5",
+        "reprocessingHangarFlag": "4",
+        "reprocessingStationsTake": "5.0000000000000003E-2",
+        "security": "0",
+        "solarSystemID": "30002780",
+        "stationID": "60000004",
+        "stationName": "Muvolailen X - Moon 3 - CBD Corporation Storage",
+        "stationTypeID": "1531",
+        "x": "1723680890880.0",
+        "y": "256414064640.0",
+        "z": "-60755435520.0"
+    }
+      """
+    val js = Json.parse(rawJson)
+    val result = js.validate[Station]
+
+    result match {
+      case JsSuccess(staResult, _) => {
+        // Not crashing is all that we're testing
+        staResult.constellationID mustEqual 20000407
+        staResult.stationName mustEqual "Muvolailen X - Moon 3 - CBD Corporation Storage"
+      }
+      case JsError(error) => {
+        ko(s"Json Parsing Error: ${error}")
+      }
+    }
   }
 
   def testBlueprintWithoutResearch = {

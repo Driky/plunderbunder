@@ -10,14 +10,14 @@ import play.api.db.DB
 import play.api.Play.current
 
 case class SolarSystem(
-  solarSystemID: Long,
+  solarSystemID: Int,
   solarSystemName: String,
-  regionID: Long,
-  factionID: Option[Long],
+  regionID: Int,
+  factionID: Option[Int],
   radius: BigDecimal,
   luminosity: BigDecimal,
   sunTypeID: Int,
-  constellationID: Long,
+  constellationID: Int,
   x: BigDecimal,
   y: BigDecimal,
   z: BigDecimal,
@@ -41,14 +41,14 @@ case class SolarSystem(
 object SolarSystem extends BaseDataset {
   implicit val solarSystemReads =
     (
-      (__ \ "solarSystemID").read[Long] and
+      (__ \ "solarSystemID").read[Int] and
       (__ \ "solarSystemName").read[String] and
-      (__ \ "regionID").read[Long] and
-      (__ \ "factionID").read[Option[Long]] and
+      (__ \ "regionID").read[Int] and
+      (__ \ "factionID").read[Option[Int]] and
       (__ \ "radius").read[BigDecimal] and
       (__ \ "luminosity").read[BigDecimal] and
       (__ \ "sunTypeID").read[Int] and
-      (__ \ "constellationID").read[Long] and
+      (__ \ "constellationID").read[Int] and
       (__ \ "x").read[BigDecimal] and
       (__ \ "y").read[BigDecimal] and
       (__ \ "z").read[BigDecimal] and
@@ -71,14 +71,9 @@ object SolarSystem extends BaseDataset {
     DB.withConnection { implicit c =>
       val sql = SQL(s"""INSERT INTO ${dataSetName} 
         (solar_system_id, solar_system_name,
-        region_id, faction_id,
-        radius, luminosity,
-        sun_type_id, constellation_id,
-        x, y, z,
-        security, security_class,
-        border, constellation,
-        corridor, fringe,
-        hub, international,
+        region_id, faction_id, radius, luminosity, sun_type_id, constellation_id,
+        x, y, z, security, security_class,
+        border, constellation, corridor, fringe, hub, international,
         regional) VALUES (
          {solarSystemID}, {solarSystemName},
          {regionID}, {factionID},
@@ -112,6 +107,43 @@ object SolarSystem extends BaseDataset {
         'international -> value.international,
         'regional -> value.regional)
       sql.executeInsert()
+    }
+  }
+
+  def getByID(solarSystemID: Int): Option[SolarSystem] = {
+    DB.withConnection { implicit c =>
+      val sql = SQL("""SELECT solar_system_id, solar_system_name, region_id, faction_id,
+        radius, luminosity, sun_type_id, constellation_id, x, y, z,
+        security, security_class, border, constellation, corridor, fringe,
+        hub, international, regional
+         FROM sde_solarsystems WHERE solar_system_id={id}
+        ;""").on('id -> solarSystemID)
+      sql().map { row =>
+        {
+          SolarSystem(
+            row[Int]("solar_system_id"),
+            row[String]("solar_system_name"),
+            row[Int]("region_id"),
+            row[Option[Int]]("faction_id"),
+            row[BigDecimal]("radius"),
+            row[BigDecimal]("luminosity"),
+            row[Int]("sun_type_id"),
+            row[Int]("constellation_id"),
+            row[BigDecimal]("x"),
+            row[BigDecimal]("y"),
+            row[BigDecimal]("z"),
+            row[BigDecimal]("security"),
+            row[Option[String]]("security_class"),
+            row[Boolean]("border"),
+            row[Boolean]("constellation"),
+            row[Boolean]("corridor"),
+            row[Boolean]("fringe"),
+            row[Boolean]("hub"),
+            row[Boolean]("international"),
+            row[Boolean]("regional"))
+
+        }
+      }.headOption
     }
   }
 }

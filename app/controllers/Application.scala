@@ -38,6 +38,7 @@ object Application extends Controller {
         routes.javascript.User.updateUserProfile,
         routes.javascript.Configure.maintenanceStatus,
         routes.javascript.Configure.reloadSde,
+        routes.javascript.Configure.reloadNullsecStations,
         routes.javascript.Application.inventoryItems,
         routes.javascript.BlueprintController.materialsForProduct,
         routes.javascript.Authentication.logout,

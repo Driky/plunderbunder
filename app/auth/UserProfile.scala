@@ -13,6 +13,7 @@ case class UserProfile(
   characterName: String,
   apiKey: Option[Long],
   apiVCode: Option[String],
+  accessMask: Option[Long],
   email: Option[String]) {
 
   def updateApiKey(apiKey: Long) {
@@ -35,6 +36,13 @@ case class UserProfile(
       sql.on('email_address -> emailAddress, 'user_id -> id).executeUpdate()
     }
   }
+  
+  def updateAccessMask(accessMask: Option[Long]) {
+    DB.withConnection { implicit c =>
+      val sql = SQL("""UPDATE kartel_users SET access_mask={accessMask} where id={user_id}""")
+      sql.on('accessMask -> accessMask, 'user_id -> id).executeUpdate()
+    }
+  }
 }
 
 object UserProfile {
@@ -42,7 +50,7 @@ object UserProfile {
   
   def getWithID(userID: Long) = {
     DB.withConnection { implicit c =>
-      val sql = SQL("""SELECT id, eve_id, character_name, api_key_id, api_key_vcode, email_address  
+      val sql = SQL("""SELECT id, eve_id, character_name, api_key_id, api_key_vcode, access_mask, email_address  
         FROM kartel_users
         WHERE id={user_id}""").on('user_id -> userID)
 
@@ -54,6 +62,7 @@ object UserProfile {
             row[String]("character_name"),
             row[Option[Long]]("api_key_id"),
             row[Option[String]]("api_key_vcode"),
+            row[Option[Long]]("access_mask"),
             row[Option[String]]("email_address"))
         }
       }.headOption

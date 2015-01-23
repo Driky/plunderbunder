@@ -80,4 +80,47 @@ object InventoryType extends BaseDataset {
       sql.executeInsert()
     }
   }
+
+  def getByID(typeID: Long): Option[InventoryType] = {
+    DB.withConnection { implicit c =>
+      val sql = SQL("""SELECT id, name,
+          base_price, capacity,
+          chance_of_duplicating, description,
+          group_id, market_group_id,
+          mass, portion_size,
+          published, race_id,
+          volume 
+        FROM sde_inventorytypes
+        WHERE id={typeID};
+        """).on('typeID -> typeID)
+
+      sql().map { row =>
+        {
+          InventoryType(
+            row[Long]("id"),
+            row[String]("name"),
+            row[Option[String]]("description"),
+            row[Option[Int]]("race_id"),
+            row[BigDecimal]("base_price"),
+            row[BigDecimal]("capacity"),
+            row[BigDecimal]("chance_of_duplicating"),
+            row[Long]("group_id"),
+            row[Option[Long]]("market_group_id"),
+            row[BigDecimal]("mass"),
+            row[Int]("portion_size"),
+            row[Int]("published"),
+            row[BigDecimal]("volume"))
+        }
+      }.headOption
+    }
+  }
+  
+  def mapForIDs(typeIDs: List[Long]): Map[Long, InventoryType] = {
+     val result = for {
+      tid <- typeIDs
+      item <- getByID(tid)
+    } yield (tid -> item)
+
+    result.toMap
+  }
 }

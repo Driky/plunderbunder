@@ -21,5 +21,15 @@ object LightweightItem {
     }
   }
   
+  def getByID(itemID: Long) = {
+    DB.withConnection { implicit c =>
+      val sql = SQL(s"""SELECT id, name 
+        FROM ${InventoryType.dataSetName}
+      WHERE id={id}""").on('id -> itemID)
+
+      sql().map { row => LightweightItem(row[String]("name"), row[Long]("id")) }.toList
+    }.headOption
+  }
+  
   implicit val lightweightItemFormat = Json.format[LightweightItem]
 }
