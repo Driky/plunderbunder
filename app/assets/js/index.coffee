@@ -10,7 +10,8 @@ require [
     'login_button'
     'bill_of_materials'
     'edit_profile'
-    ], (React, ItemSearch, LoginButton, BillOfMaterials, EditProfile) -> 
+    'asset_list'
+    ], (React, ItemSearch, LoginButton, BillOfMaterials, EditProfile, AssetList) -> 
     asset_router = ar.controllers.Assets
 
     {div, nav, a, ul, li} = React.DOM
@@ -18,7 +19,19 @@ require [
     NO_MODE = 0
     BP_MODE = 1
     EP_MODE = 2
+    AS_MODE = 3
     
+    HeaderItem = React.createClass
+        render: ->
+            li { key: 'hdr-itm' }, [
+                a { 
+                    key: 'a'
+                    href: '#'
+                    role: 'button'
+                    id: @props.id
+                    onClick: @props.onClick
+                }, @props.label
+            ]
     MasterView = React.createClass
         getInitialState: ->
             {
@@ -36,6 +49,8 @@ require [
                 newMode = BP_MODE
             else if (event.target.id == 'epMode')
                 newMode = EP_MODE
+            else if (event.target.id == 'asMode')
+                newMode = AS_MODE
             
             @setState { mode: newMode }
             
@@ -46,6 +61,7 @@ require [
             isf = React.createFactory ItemSearch
             bdf = React.createFactory BillOfMaterials
             epf = React.createFactory EditProfile
+            assets = React.createFactory AssetList
             
             if (@state.mode == BP_MODE)
                 [
@@ -54,11 +70,14 @@ require [
                 ]
             else if (@state.mode == EP_MODE)
                 epf { key: 'epf', profile: @refs.loginbutton.state.profile }, null
+            else if @state.mode == AS_MODE
+                assets { key: 'assets' }, null
             else
                 ""
             
         render: ->
             lb = React.createFactory LoginButton
+            hi = React.createFactory HeaderItem
             
             bodyContent = @contentForMode()
             
@@ -75,15 +94,18 @@ require [
                         key: 'navleft'
                         className: 'nav navbar-nav'
                     }, [
-                        li { key: 'bpMode' }, [
-                            a { 
-                                key: 'lb-dd-a'
-                                href: '#'
-                                role: 'button'
-                                id: 'bpMode'
-                                onClick: @setMode
-                            }, "Blueprint Detail"
-                        ]
+                        hi {
+                            key: 'bpomfg'
+                            onClick: @setMode
+                            id: 'bpMode'
+                            label: "Blueprint Details"
+                        }, null
+                        hi {
+                            key: 'assets'
+                            onClick: @setMode
+                            id: 'asMode'
+                            label: "Assets"
+                        }
                     ]
                     ul { key: 'navright', className: 'nav navbar-nav navbar-right' }, [
                         lb { 

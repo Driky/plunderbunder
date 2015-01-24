@@ -24,3 +24,4 @@ sde_scripts/sde*
 sde_scripts/venv
 .cache
 activator
+.tmpBin

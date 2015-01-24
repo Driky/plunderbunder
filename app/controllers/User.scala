@@ -120,7 +120,7 @@ object User extends Controller with JsonController {
         asset.quantity,
         contents,
         locations.get(asset.locationID).map { _.stationName },
-        itemTypes.get(asset.typeID).map { _.name })
+        Option(itemTypes.get(asset.typeID).fold(s"Unknown Item #${asset.typeID}")(_.name)))
     }
   }
 
@@ -138,7 +138,7 @@ object User extends Controller with JsonController {
       assets.map { a =>
         {
           val locationIDs = a.map(_.locationID).distinct
-          val typeIDs = a.map(_.typeID).distinct
+          val typeIDs = a.map(asset => asset.typeID :: asset.contents.map { _.typeID }).flatten.distinct
 
           val locationMap = Station.mapForIDs(locationIDs)
           val typeMap = InventoryType.mapForIDs(typeIDs)

@@ -39,12 +39,12 @@ define ['react'], (React) ->
                 profile: {}
             }
         
-        reloadViaAjax: (userID) ->
+        reloadViaAjax: () ->
             userProfileURL = jsRoutes.controllers.User.userProfile()
             userProfileURL.ajax()
             .done ((result) ->
                 if this.isMounted()
-                    console.log('RESULT: ' + JSON.stringify(result))
+                    # console.log('RESULT: ' + JSON.stringify(result))
                     apiKeyValid = result.accessMask != null
                     @setState { profile: result,  ajaxLoading: false, apiKeyValid: apiKeyValid }
                 ).bind this
@@ -55,10 +55,10 @@ define ['react'], (React) ->
             ).bind this
             
         componentDidMount: ->
-            @reloadViaAjax(@props.profile.id)
+            @reloadViaAjax()
             
         componentWillReceiveProps: (nextProps) ->
-            @reloadViaAjax(nextProps.profile.id)
+            @reloadViaAjax()
         
         formChanged: (event) ->
             etv = event.target.value
@@ -98,7 +98,7 @@ define ['react'], (React) ->
                         if this.isMounted()
                             @refs.inp_alert.setState { message: controlName + ' saved', visible: true }
                             
-                            console.log('SAVE RESULT: ' + JSON.stringify(result))
+                            # console.log('SAVE RESULT: ' + JSON.stringify(result))
                             
                             if result.keyIsValid
                                 @setState { apiKeyValid: true }
@@ -113,7 +113,6 @@ define ['react'], (React) ->
             ).bind(this), 600)
             
         render: ->
-            console.log('rendering')
             af = React.createFactory AlertBox
             
             apiKeyMessage = div { 

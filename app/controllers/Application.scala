@@ -36,6 +36,7 @@ object Application extends Controller {
         routes.javascript.User.user,
         routes.javascript.User.userProfile,
         routes.javascript.User.updateUserProfile,
+        routes.javascript.User.getUserAssets,
         routes.javascript.Configure.maintenanceStatus,
         routes.javascript.Configure.reloadSde,
         routes.javascript.Configure.reloadNullsecStations,
