@@ -79,4 +79,12 @@ object BlueprintController extends Controller {
 
     Ok(response)
   }
+
+  def productsForMaterial(materialID: Long) = AuthenticatedAction {
+    val products = lookups.LightweightItem.productsForMaterial(materialID)
+
+    Logger.info("Products: " + products)
+    val response = JsObject("items" -> Json.toJson(products) :: Nil)
+    Ok(response)
+  }
 }

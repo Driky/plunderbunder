@@ -29,6 +29,7 @@ GET		/js/config						controllers.Application.configuration
 
 GET		/lookup/items					controllers.Application.inventoryItems
 
-GET		/bom/:productID					controllers.BlueprintController.materialsForProduct(productID:Long)
+GET		/bom/materials/:productID		controllers.BlueprintController.materialsForProduct(productID:Long)
+GET		/bom/products/:materialID		controllers.BlueprintController.productsForMaterial(materialID: Long)
 
 GET		/market/jita/:itemID			controllers.MarketController.jitaPriceForItem(itemID: Long)

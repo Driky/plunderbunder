@@ -1,7 +1,74 @@
 define ['react'], (React) ->
     
-    { div, button, span, i } = React.DOM
+    { div, button, span, i, a, h4 } = React.DOM
     
+    MaterialUsesPanel = React.createClass
+        getInitialState: ->
+            {
+                reloading: false
+                items: []
+            }
+        render: ->
+            div {
+                className: "modal fade" 
+                id: "matlUsesPanel" 
+                tabIndex: "-1" 
+                role: "dialog"
+                key: 'mdl'
+            }, [
+                div {
+                    className: "modal-dialog"
+                    key: 'mdlg'
+                }, [
+                    div { 
+                        className: "modal-content" 
+                        key: 'mdlc'
+                    }, [
+                        div {className: "modal-header", key: 'modlh' }, [
+                            button {
+                                type: "button"
+                                className: "close"
+                                'data-dismiss': "modal"
+                                key: 'mdldisx'
+                            }, [
+                                span { key: 'x' }, "×"
+                            ]
+                            h4 {
+                                className: "modal-title"
+                                id: "materialUsesLabel"
+                                key: 'mdlh'
+                            }, if @state.materialName then "Uses for " + @state.materialName else "Uses for Material"
+                        ]
+                        div {
+                            className: "modal-body"
+                            key: 'mdlb'
+                        }, [
+                            if @state.reloading
+                                "Loading..."
+                            else
+                                @state.items.map (item) ->
+                                    div { className: 'row', key: 'row' + item.id }, [
+                                        div {
+                                            className: 'col-md-12'
+                                            key: 'col' + item.id 
+                                        }, item.name
+                                    ]
+                        ]
+                        div {
+                            className: "modal-footer"
+                            key: 'modlf'
+                        }, [
+                            button {
+                                type: "button"
+                                className: "btn btn-default"
+                                'data-dismiss': "modal"
+                                key: 'mdldisc'
+                            }, "Close"
+                        ]
+                    ]
+                ]
+            ]
+            
     AssetList = React.createClass
         getInitialState: ->
             {
@@ -39,7 +106,29 @@ define ['react'], (React) ->
                 ex.splice(index, 1)
                 @setState { expanded: ex}
         
+        findUses: (event) ->
+            eveItemID = Number(event.target.id.substring(3))
+            
+            $('#matlUsesPanel').modal { show: true }
+            usesPanel = @refs.usesPanel
+            usesPanel.setState {material: eveItemID, reloading: true, items: []}
+            
+            productUrl = jsRoutes.controllers.BlueprintController.productsForMaterial(eveItemID)
+            
+            productUrl.ajax() 
+            .done ((result) ->
+                if this.isMounted()
+                    usesPanel.setState { reloading: false, items: result.items }
+                ).bind this
+            .fail ((jqXHR, textStatus, errorThrown) ->
+                resultCode = jqXHR.status
+                if this.isMounted()
+                    @setState { reloading: false, items: [] }
+            ).bind this
+            
         render: ->
+            materialUsesPanel = React.createFactory MaterialUsesPanel
+            
             if !@state.assets
                 div {key: 'assets'}, "Loading..."
             else if @state.assets.length == 0
@@ -56,8 +145,10 @@ define ['react'], (React) ->
                 locationIDs = Object.keys(assetsByLoc)
                 
                 expanded = @state.expanded
+                displayUses = @state.displayUses
                 
                 expandClicked = @expandClicked
+                findUses = @findUses
                 
                 locationGroups = locationIDs.map (location) ->
                     locAssets = assetsByLoc[location]
@@ -86,6 +177,20 @@ define ['react'], (React) ->
                                             id: 'pl' + asset.eveItemID
                                         }, null
                                 ]
+                                if asset.usedInManufacturing
+                                    button {
+                                        key: 'drilldown'
+                                        className: 'btn btn-xs pull-right'
+                                        onClick: findUses
+                                    }, [
+                                        i { 
+                                            key: 'mag'
+                                            className: 'glyphicon glyphicon-search'
+                                            id: 'use' + asset.typeID 
+                                        }, null
+                                    ]
+                                else
+                                    null
                             ]
                             div { key: 'q', className: 'col-md-1', style: { textAlign: 'right' } }, asset.quantity
                             div { key: 'an', className: 'col-md-10' }, asset.assetName
@@ -111,14 +216,31 @@ define ['react'], (React) ->
                         div { 
                             key: 'title'
                             className: 'panel-heading' 
-                        }, locName + ': ' + locAssets.length + if locAssets.length == 1 then ' asset' else ' assets'
-                        div {
-                            key: 'body'
-                            className: 'panel-body'
                         }, [
-                            assetRows
+                            a { 
+                                key: 'lnk'
+                                'data-toggle': "collapse"
+                                'data-target': '#pnl' + location 
+                                href: '#'
+                                ariaExpanded: "true" 
+                                ariaControls: 'pnl' + location
+                            }, locName + ': ' + locAssets.length + if locAssets.length == 1 then ' asset' else ' assets'
+                        ]
+                        div {
+                            key: 'clps'
+                            className: 'panel-collapse collapse in'
+                            id: 'pnl' + location
+                        }, [
+                            div {
+                                key: 'body'
+                                className: 'panel-body'
+                            }, [
+                                assetRows
+                            ]
                         ]
                     ]
                     
+                children = locationGroups
+                children.push( materialUsesPanel {key: 'up', ref: 'usesPanel'}, null )
                 div {key: 'assets'}, locationGroups
     AssetList

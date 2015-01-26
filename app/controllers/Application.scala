@@ -42,6 +42,7 @@ object Application extends Controller {
         routes.javascript.Configure.reloadNullsecStations,
         routes.javascript.Application.inventoryItems,
         routes.javascript.BlueprintController.materialsForProduct,
+        routes.javascript.BlueprintController.productsForMaterial,
         routes.javascript.Authentication.logout,
         routes.javascript.MarketController.jitaPriceForItem)).as("text/javascript")
   }

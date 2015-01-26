@@ -107,12 +107,14 @@ object User extends Controller with JsonController {
     quantity: Int,
     contents: List[VerboseAsset],
     locationName: Option[String],
-    assetName: Option[String]) {}
+    assetName: Option[String],
+    usedInManufacturing: Boolean) {}
   object VerboseAsset {
     implicit val format = Json.format[VerboseAsset]
 
     def fromAsset(asset: Asset, itemTypes: Map[Long, InventoryType], locations: Map[Int, Station]): VerboseAsset = {
       val contents = asset.contents.map { VerboseAsset.fromAsset(_, itemTypes, locations) }
+      
       VerboseAsset(
         asset.locationID,
         asset.eveItemID,
@@ -120,7 +122,8 @@ object User extends Controller with JsonController {
         asset.quantity,
         contents,
         locations.get(asset.locationID).map { _.stationName },
-        Option(itemTypes.get(asset.typeID).fold(s"Unknown Item #${asset.typeID}")(_.name)))
+        Option(itemTypes.get(asset.typeID).fold(s"Unknown Item #${asset.typeID}")(_.name)),
+        asset.manufacturingComponent)
     }
   }
 

@@ -12,6 +12,12 @@ Build or Buy Manufacturing
 Take a blueprint and determine if the submaterials (eg. T2 components) are better off built
 or purchased. Prices are displayed from Jita sell orders and Jita split (lowest sell + highest buy) / 2
 
+Asset List
+----------
+
+Show the assets of the current player and display the contents of container assets (Station Containers, Ships)
+or show what manufacturing item the asset is used to build
+
 **Planned Features**
 
   * Supply ME factor for blueprints (who builds off of unresearched BPOs?)
@@ -20,8 +26,6 @@ or purchased. Prices are displayed from Jita sell orders and Jita split (lowest 
 Roadmap
 =======
 
-  * What uses what?
-    * What use do certain subcomponents have (eg. High Tech Datachip, Carbon)
   * Does it reprocess?
     * Find all the crap in hangars and create a list of everything that has a 
       reprocess value within *x*% of sell price

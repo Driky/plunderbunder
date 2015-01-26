@@ -2,8 +2,23 @@ package com.eveonline.xmlapi
 
 import play.api.libs.json._
 
+import anorm._
+import play.api.db.DB
+import anorm.SqlParser.{ scalar }
+
+import play.api.Play.current
+import play.api.Logger
+
 case class Asset(locationID: Int, eveItemID: Long, typeID: Long, quantity: Int, contents: List[Asset]) {
-  
+  lazy val manufacturingComponent = {
+     DB.withConnection { implicit c =>
+      val sql = SQL(s"""SELECT count(*) 
+        FROM sde_blueprint_activity_materials 
+        where type_id={typeID};""").on('typeID -> typeID)
+        
+        sql.as(scalar[Long].single) > 0
+     }
+  }
 }
 
 object Asset {

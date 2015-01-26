@@ -98,8 +98,6 @@ define ['react'], (React) ->
                         if this.isMounted()
                             @refs.inp_alert.setState { message: controlName + ' saved', visible: true }
                             
-                            # console.log('SAVE RESULT: ' + JSON.stringify(result))
-                            
                             if result.keyIsValid
                                 @setState { apiKeyValid: true }
                             else
