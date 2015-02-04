@@ -36,7 +36,7 @@ define ['react'], (React) ->
                 ]
             ]
         componentDidMount: ->
-            itemList = jsRoutes.controllers.Application.inventoryItems().url
+            itemList = jsRoutes.controllers.Application.buildableInventoryItems().url
 
             engine = new Bloodhound {
                 datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),

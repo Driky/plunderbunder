@@ -41,6 +41,7 @@ object Application extends Controller {
         routes.javascript.Configure.reloadSde,
         routes.javascript.Configure.reloadNullsecStations,
         routes.javascript.Application.inventoryItems,
+        routes.javascript.Application.buildableInventoryItems,
         routes.javascript.BlueprintController.materialsForProduct,
         routes.javascript.BlueprintController.productsForMaterial,
         routes.javascript.Authentication.logout,
@@ -64,10 +65,16 @@ object Application extends Controller {
 
   }
 
-  def inventoryItems = Action { implicit request =>
-    Logger.info("prefetched")
+  def buildableInventoryItems = Action {
+    val manufacturables = LightweightItem.listInventoryTypes(onlyManufacturable=true)
 
-    val inventoryNames = LightweightItem.listInventoryTypes
+    val js = Json.toJson(manufacturables)
+
+    Ok(js)
+  }
+  
+  def inventoryItems = Action { implicit request =>
+    val inventoryNames = LightweightItem.listInventoryTypes()
 
     val js = Json.toJson(inventoryNames)
 
