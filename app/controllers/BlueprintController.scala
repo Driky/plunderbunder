@@ -15,7 +15,7 @@ import play.api.libs.json._
 import scala.language.postfixOps
 import auth.AuthenticatedAction
 
-object BlueprintController extends Controller {
+object BlueprintController extends Controller with JsonController {
 
   case class BillOfMaterials(blueprintID: Long, materialID: Long, quantity: Int, name: String, volume: BigDecimal, materialBlueprint: Option[Long])
 
@@ -70,14 +70,27 @@ object BlueprintController extends Controller {
     }
   }
 
+  def quantityProducedPerRun(productID: Long) = {
+    DB.withConnection { implicit c =>
+      val sql = SQL("""SELECT quantity  from sde_blueprint_activity_products p 
+                        WHERE type_id = {productID};""").on('productID -> productID)
+
+      sql().map { row => row[Long]("quantity") }.toList.headOption
+    }
+
+  }
+
   def materialsForProduct(productID: Long) = AuthenticatedAction {
     implicit val bomFormat = Json.format[BillOfMaterials]
 
     val baseMaterials = baseMaterialsForProduct(productID)
+    val quantityProduced = quantityProducedPerRun(productID).getOrElse(0L)
 
-    val response = Json.toJson(baseMaterials)
+    val response = JsObject("materials" -> Json.toJson(baseMaterials) ::
+      "quantityProduced" -> JsNumber(quantityProduced) ::
+      Nil)
 
-    Ok(response)
+    OkJson(response)
   }
 
   def productsForMaterial(materialID: Long) = AuthenticatedAction {
@@ -85,6 +98,6 @@ object BlueprintController extends Controller {
 
     Logger.info("Products: " + products)
     val response = JsObject("items" -> Json.toJson(products) :: Nil)
-    Ok(response)
+    OkJson(response)
   }
 }

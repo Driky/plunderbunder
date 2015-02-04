@@ -9,8 +9,14 @@ define ['react'], (React) ->
                 jitaPrice: NaN
                 jitaSplit: NaN
                 subMaterials: []
+                subMaterialProduced: 0
                 keyfix: Math.random()
                 materialEfficiency: 0
+            }
+
+        getDefaultProps: ->
+            {
+                manufacturingProduces: 1
             }
 
         getSubMaterialsClick: ->
@@ -20,7 +26,8 @@ define ['react'], (React) ->
                 # Assuming any 200 is success
                 # alert result
                 @setState {
-                    subMaterials: result
+                    subMaterials: result.materials
+                    subMaterialProduced: result.quantityProduced
                 }
             ).bind(this)
             .fail ((jqXHR, textStatus, errorThrown) ->
@@ -79,22 +86,24 @@ define ['react'], (React) ->
                 getSubMaterials = td { key:@state.keyfix + '-subm' }, null
                 materialEfficiency = ""
                 
-            q = @props.quantity
+            q = @props.quantity 
             me = Math.pow(0.99, @state.materialEfficiency)
-        
+            smp = @state.subMaterialProduced
             if (@state.subMaterials.length > 0)
                 subMaterials = @state.subMaterials.map (row) ->
                     row.addCosts = ac
                     row.isChild = true
                     row.quantityModifier = (q * me)
                     row.key = row.materialID
+                    row.manufacturingProduces = smp
                     bomeFactory row, null
             else
                 subMaterials = null
                 
-            displayableQuantity = @props.quantity 
+            displayableQuantity = @props.quantity / @props.manufacturingProduces
             if (@props.quantityModifier)
-                displayableQuantity = Math.round(displayableQuantity * @props.quantityModifier)
+                displayableQuantity = Math.round(displayableQuantity * @props.quantityModifier * 10, -1) / 10
+            
                 
             actualChildren = [
                 td { key: 'q', style: { textAlign: 'right' } }, displayableQuantity
@@ -128,7 +137,7 @@ define ['react'], (React) ->
                 displayableQuantity = @props.quantity
                 
                 if (@props.quantityModifier)
-                    displayableQuantity = Math.round(displayableQuantity * @props.quantityModifier)
+                    displayableQuantity = Math.round(100 * displayableQuantity * @props.quantityModifier / @props.manufacturingProduces) / 100
                 
                 cost = result.sellPrice * displayableQuantity
                 splitCost = split * displayableQuantity
@@ -141,7 +150,7 @@ define ['react'], (React) ->
             )
             
         componentDidMount: ->
-            this.getJitaPricing()
+            @getJitaPricing()
             true
             
         componentWillReceiveProps: (nextProps) ->
@@ -150,7 +159,7 @@ define ['react'], (React) ->
                 jitaSplit: NaN
                 subMaterials: []
             }
-            this.getJitaPricing()
+            @getJitaPricing()
             true
             
     BillOfMaterialMfgPrice = React.createClass
@@ -226,13 +235,39 @@ define ['react'], (React) ->
             ]
             
     BillOfMaterialsTitle = React.createClass
+        getInitialState: ->
+            {
+                jitaSellPrice: NaN
+            }
+        
+        getJitaPricing: ->
+            jitaPriceURL = jsRoutes.controllers.MarketController.jitaPriceForItem(@props.itemID)
+            $.ajax jitaPriceURL
+            .done ((result) ->
+                cost = result.sellPrice 
+                this.setState { jitaSellPrice: cost }
+                
+            ).bind(this)
+            .fail((jqXHR, textStatus, errorThrown) ->
+                this.setState { jitaSellPrice: NaN }
+            )
+        
         efficiencyChanged: (event) ->
             @props.efficiencyChanged(event.target.value)
             
         render: ->
+            displayName = @props.itemName + if @props.quantityProduced > 1 then " × " + @props.quantityProduced else ""
+            displayJitaSell = if @state.jitaSellPrice == NaN
+                "..."
+            else
+                (@state.jitaSellPrice * @props.quantityProduced).toLocaleString()
+                    
             div { key: 'bomtitle', className: 'row' }, [
                 div { key: 'tcol', className: 'col-md-4' }, [
-                    h2 { key: 'th2' }, @props.itemName
+                    h2 { key: 'th2' }, displayName
+                ]
+                div { key: 'pricecol', className: 'col-md-2' }, [
+                    h2 { key: 'pch2'}, "Jita Sell " + displayJitaSell
                 ]
                 div { key: 'mecol', className: 'col-md-1 input-group input-group-sm'}, [
                     label { key: 'melbl', labelFor: 'bow-mein' }, "ME %"
@@ -253,10 +288,20 @@ define ['react'], (React) ->
                 ]
             ]
             
+        componentDidMount: ->
+            @getJitaPricing()
+            true
+            
+        componentWillReceiveProps: (nextProps) ->
+            @setState @getInitialState()
+            @getJitaPricing()
+            true
+            
     BlueprintDetails = React.createClass
         getInitialState: ->
             {
                 billOfMaterials: []
+                quantityProduced: 0
                 materialEfficiency: 0
             }
             
@@ -269,8 +314,10 @@ define ['react'], (React) ->
             .done ((result) ->
                 # Assuming any 200 is success
                 @setState {
-                    billOfMaterials: result
+                    billOfMaterials: result.materials
+                    quantityProduced: result.quantityProduced
                     itemName: itemName
+                    itemID: itemID
                     totalJita: 0
                     totalJitaSplit: 0
                 }
@@ -297,7 +344,9 @@ define ['react'], (React) ->
                 div { key: 'bom' }, [
                     bomtFactory { 
                         key: 'ttl'
-                        itemName: @state.itemName 
+                        itemName: @state.itemName
+                        itemID: @state.itemID 
+                        quantityProduced: @state.quantityProduced
                         efficiencyChanged: @baseEfficiencyChanged
                     }, null
                     div { key: 'bomrow' + Math.random(), className: 'row' }, [
