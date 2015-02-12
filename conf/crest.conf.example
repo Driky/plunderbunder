@@ -3,3 +3,4 @@
 crest.client_id = "aaaabbbbccccddddeeeeffff11112222"
 crest.app_secret = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcd"
 crest.callback = "https://your.hosted.domain/auth/result"
+crest.timeout = 20

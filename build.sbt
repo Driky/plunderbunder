@@ -13,6 +13,7 @@ libraryDependencies ++= Seq(
   anorm,
   cache,
   ws,
+  "com.typesafe.akka" %% "akka-contrib" % "2.3.9",
   "org.webjars" % "react" % "0.12.1",
   "org.webjars" % "bootstrap" % "3.3.1",
   "org.webjars" % "typeaheadjs" % "0.10.5-1",
