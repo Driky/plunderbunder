@@ -29,7 +29,7 @@ object CrestRequest {
 }
 
 trait CrestRequest {
-  def get(url: String, accessToken: String, salt: Option[String] = None) = {
+  def get(url: String, accessToken: String, salt: Option[String] = None, acceptType: Option[String] = None) = {
 
     val config = current.configuration
     val offlineMode = config.getBoolean("development.offline").getOrElse(false)
@@ -43,8 +43,10 @@ trait CrestRequest {
 
       cachedValue.fold({
 
+        val acceptHeader = acceptType.fold("X-Client-WIP" -> "IGNORE THIS HEADER")("Accept" -> _)
         val request = WS.url(url)
-          .withHeaders("Authorization" -> s"Bearer ${accessToken}")
+          .withHeaders("Authorization" -> s"Bearer ${accessToken}", acceptHeader)
+          
 
         // TODO: add version
         // TODO: add content-type
@@ -57,7 +59,13 @@ trait CrestRequest {
 
         result foreach { res =>
           if (res.status == 200) {
-            // TODO: Extract cached-until
+            
+            if (acceptType.isEmpty) {
+              val resultContentType = res.header("Content-Type")
+              Logger.error(s"[!!] Request to ${url} is missing an accept header. Currently it is returning ${resultContentType}")
+            }
+            
+            // Extract cached-until
             val cacheControl = res.header("Cache-Control")
 
             cacheControl.foreach { ctl =>

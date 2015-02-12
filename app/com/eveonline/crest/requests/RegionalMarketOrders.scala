@@ -16,11 +16,13 @@ object MarketOrdersResponse {
 }
 
 object RegionalMarketOrders extends CrestRequest {
+  
+  val requestAcceptType = "application/vnd.ccp.eve.MarketOrderCollection-v1+json"
 
   def regionalBuyOrders(regionID: Long, itemID: Long, token: String) = {
     val buyOrderUrl = s"${crestEndpoint}/market/${regionID}/orders/buy/?type=${crestEndpoint}/types/${itemID}/"
 
-    val response = get(buyOrderUrl, token)
+    val response = get(buyOrderUrl, token, acceptType = Option(requestAcceptType))
 
     response.flatMap { r =>
       {
@@ -50,7 +52,7 @@ object RegionalMarketOrders extends CrestRequest {
     // Crawling this URL doesn't really make much sense because the argument isn't obvious 
     val sellOrderUrl = s"${crestEndpoint}/market/${regionID}/orders/sell/?type=${crestEndpoint}/types/${itemID}/"
 
-    val response = get(sellOrderUrl, token)
+    val response = get(sellOrderUrl, token, acceptType = Option(requestAcceptType))
 
     response.flatMap { r =>
       {
