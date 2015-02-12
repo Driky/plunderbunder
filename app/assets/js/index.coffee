@@ -66,6 +66,7 @@ require [
             if (@state.mode == BP_MODE)
                 [
                     isf { key: 'app-isf', onItemSelected: this.selectedItem }, null
+
                     bdf { key: 'app-bdf', ref: 'blueprintDetail' }, null
                 ]
             else if (@state.mode == EP_MODE)
@@ -88,7 +89,7 @@ require [
                             key: 'brandname'
                             className: 'navbar-brand'
                             href: '#' 
-                        }, "Kartel"
+                        }, "Plunderbunder"
                     ]
                     ul {
                         key: 'navleft'

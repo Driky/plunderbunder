@@ -8,7 +8,7 @@
 # This is useful for unifying all of the data available in the EVE 
 # Static Data Export into one format.
 # They seem to be moving towards YAML, but I find JSON to be easier to work
-# with in Kartel, so that's what I'm using for now.
+# with in Plunderbund, so that's what I'm using for now.
 #
 
 import json

@@ -1,4 +1,4 @@
-name := """kartel"""
+name := """plunderbunder"""
 
 version := "1.0-SNAPSHOT"
 

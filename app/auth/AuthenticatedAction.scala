@@ -94,11 +94,11 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
   def createUserIfApplicable(verify: VerifyResponse): Option[Long] = {
     DB.withConnection { implicit c =>
       val sql = SQL("""SELECT id, eve_id 
-        FROM kartel_users
+        FROM plunderbunder_users
         WHERE eve_id={eve_id}""").on('eve_id -> verify.characterID)
 
       if (sql().length == 0) {
-        val insql = SQL("""INSERT INTO kartel_users
+        val insql = SQL("""INSERT INTO plunderbunder_users
           (eve_id, character_name)
           VALUES
           ({eve_id}, {character_name});

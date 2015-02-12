@@ -96,7 +96,7 @@ CREATE TABLE sde_stations(
     z decimal
 );
 
-CREATE TABLE kartel_users (
+CREATE TABLE plunderbunder_users (
     id integer primary key auto_increment,
     eve_id integer,
     character_name varchar(64),
@@ -121,4 +121,4 @@ DROP TABLE IF EXISTS sde_blueprint_activity_skills;
 DROP TABLE IF EXISTS sde_blueprint_activity_products;
 DROP TABLE IF EXISTS sde_stations;
 
-DROP TABLE IF EXISTS kartel_users;
+DROP TABLE IF EXISTS plunderbunder_users;

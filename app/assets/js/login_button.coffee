@@ -15,7 +15,7 @@ define ['react'], (React) ->
 
         renderLoggedIn: (loginPath) ->
             eve_login_img_src = (asset_router.at "images/EVE_SSO_Login_Buttons_Small_White.png").url
-            loginPath = kartelConfig.eve_login
+            loginPath = plunderbunderConfig.eve_login
             
             li { key: 'lili' }, [
                 a {"href": loginPath}, [

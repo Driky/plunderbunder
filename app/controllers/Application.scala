@@ -59,7 +59,7 @@ object Application extends Controller {
 
     val jsResult = JsObject(Seq("eve_login" -> JsString(eveLoginUrl)))
 
-    val preloaded = s"var kartelConfig = ${jsResult.toString()}"
+    val preloaded = s"var plunderbunderConfig = ${jsResult.toString()}"
 
     Ok(preloaded).as("text/javascript")
 

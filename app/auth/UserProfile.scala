@@ -18,28 +18,28 @@ case class UserProfile(
 
   def updateApiKey(apiKey: Long) {
     DB.withConnection { implicit c =>
-      val sql = SQL("""UPDATE kartel_users SET api_key_id={api_key} where id={user_id}""")
+      val sql = SQL("""UPDATE plunderbunder_users SET api_key_id={api_key} where id={user_id}""")
       sql.on('api_key -> apiKey, 'user_id -> id).executeUpdate()
     }
   }
 
   def updateApiVCode(apiVCode: String) {
     DB.withConnection { implicit c =>
-      val sql = SQL("""UPDATE kartel_users SET api_key_vcode={vcode} where id={user_id}""")
+      val sql = SQL("""UPDATE plunderbunder_users SET api_key_vcode={vcode} where id={user_id}""")
       sql.on('vcode -> apiVCode, 'user_id -> id).executeUpdate()
     }
   }
 
   def updateEmailAddress(emailAddress: String) {
     DB.withConnection { implicit c =>
-      val sql = SQL("""UPDATE kartel_users SET email_address={email_address} where id={user_id}""")
+      val sql = SQL("""UPDATE plunderbunder_users SET email_address={email_address} where id={user_id}""")
       sql.on('email_address -> emailAddress, 'user_id -> id).executeUpdate()
     }
   }
   
   def updateAccessMask(accessMask: Option[Long]) {
     DB.withConnection { implicit c =>
-      val sql = SQL("""UPDATE kartel_users SET access_mask={accessMask} where id={user_id}""")
+      val sql = SQL("""UPDATE plunderbunder_users SET access_mask={accessMask} where id={user_id}""")
       sql.on('accessMask -> accessMask, 'user_id -> id).executeUpdate()
     }
   }
@@ -51,7 +51,7 @@ object UserProfile {
   def getWithID(userID: Long) = {
     DB.withConnection { implicit c =>
       val sql = SQL("""SELECT id, eve_id, character_name, api_key_id, api_key_vcode, access_mask, email_address  
-        FROM kartel_users
+        FROM plunderbunder_users
         WHERE id={user_id}""").on('user_id -> userID)
 
       sql().map { row =>
