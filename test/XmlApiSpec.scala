@@ -7,7 +7,7 @@ import play.api.test.Helpers._
 import play.api.Logger
 
 import scala.xml._
-import com.eveonline.xmlapi.{ AssetResponse, ConquerableStationResponse }
+import com.eveonline.xmlapi._
 import com.eveonline.sde.Station
 import org.joda.time.DateTimeZone
 import lookups.LightweightItem
@@ -25,6 +25,10 @@ class XmlApiSpec extends Specification {
       FakeApplication()) {
         testConquerableStationXmlParsing
       }
+
+    "parse a valid market orders result" in running(FakeApplication()) {
+      testMarketOrderXml
+    }
   }
 
   def testConquerableStationXmlParsing = {
@@ -64,7 +68,7 @@ class XmlApiSpec extends Specification {
 
     response.stations.length mustEqual 1
     val station = response.stations.head
-    
+
     station.stationID mustEqual 60014917
     station.stationName mustEqual "VFK-IV VI - Moon 1 - Mittanigrad"
     station.stationTypeID mustEqual 12295
@@ -151,12 +155,79 @@ class XmlApiSpec extends Specification {
 
     content1.quantity mustEqual 1
     content2.quantity mustEqual 7
- 
-    val c1Name = LightweightItem.getByID( content1.typeID ).map { _.name }
+
+    val c1Name = LightweightItem.getByID(content1.typeID).map { _.name }
 
     val c2Name = LightweightItem.getByID(content2.typeID).map { _.name }
 
     c1Name mustEqual Some("Expanded Probe Launcher I")
     c2Name mustEqual Some("Combat Scanner Probe I")
+  }
+
+  def testMarketOrderXml = {
+    val rawXml = """<?xml version='1.0' encoding='UTF-8'?>
+<eveapi version="2">
+  <currentTime>2015-02-13 01:13:18</currentTime>
+  <result>
+    <rowset name="orders" key="orderID" columns="orderID,charID,stationID,volEntered,volRemaining,minVolume,orderState,typeID,range,accountKey,duration,escrow,price,bid,issued">
+      <row orderID="3171416121" charID="123525470" stationID="60014086" volEntered="1" volRemaining="0" minVolume="1" orderState="2" typeID="30746" range="32767" accountKey="1000" duration="0" escrow="0.00" price="1500000.00" bid="0" issued="2015-02-09 21:41:37" />
+      <row orderID="9919111717" charID="123525470" stationID="60003760" volEntered="1" volRemaining="0" minVolume="1" orderState="2" typeID="2297" range="32767" accountKey="1000" duration="90" escrow="0.00" price="1439922.86" bid="0" issued="2015-02-13 00:57:56" />
+    </rowset>
+  </result>
+  <cachedUntil>2015-02-13 02:08:48</cachedUntil>
+</eveapi>
+      
+      """
+
+    val xml = XML.loadString(rawXml)
+    val response = MarketOrdersResponse.fromXml(xml)
+
+    response.apiVersion mustEqual 2
+
+    response.responseTime.getYear mustEqual 2015
+    response.responseTime.getMonthOfYear mustEqual 2
+    response.responseTime.getDayOfMonth mustEqual 13
+    response.responseTime.getHourOfDay() mustEqual 1
+    response.responseTime.getMinuteOfHour() mustEqual 13
+    response.responseTime.getSecondOfMinute() mustEqual 18
+    response.responseTime.getZone mustEqual DateTimeZone.UTC
+
+    response.cachedUntil.getYear mustEqual 2015
+    response.cachedUntil.getMonthOfYear mustEqual 2
+    response.cachedUntil.getDayOfMonth mustEqual 13
+    response.cachedUntil.getHourOfDay() mustEqual 2
+    response.cachedUntil.getMinuteOfHour() mustEqual 8
+    response.cachedUntil.getSecondOfMinute() mustEqual 48
+    response.cachedUntil.getZone mustEqual DateTimeZone.UTC
+
+    response.marketOrders.length mustEqual 2
+
+    val sortedOrders = response.marketOrders.sortBy { _.orderID }
+
+    val o1 :: o2 :: tail = sortedOrders
+
+    o1.orderID mustEqual 3171416121L
+    o1.characterID mustEqual 123525470L
+    o1.stationID mustEqual 60014086L
+    o1.volEntered mustEqual 1
+    o1.volRemaining mustEqual 0
+    o1.minVolume mustEqual 1
+    o1.orderState mustEqual 2
+    o1.typeID mustEqual 30746
+    o1.duration mustEqual 0
+    BigDecimal(0).compare(o1.escrow) mustEqual 0
+    o1.price.compare(BigDecimal("1500000.00")) mustEqual 0
+    o1.issued.getYear mustEqual 2015
+    o1.issued.getMonthOfYear mustEqual 2
+    o1.issued.getDayOfMonth mustEqual 9
+    o1.issued.getHourOfDay() mustEqual 21
+    o1.issued.getMinuteOfHour() mustEqual 41
+    o1.issued.getSecondOfMinute() mustEqual 37
+    o1.issued.getZone mustEqual DateTimeZone.UTC
+    o1.isBuyOrder must beFalse
+
+    o2.orderID mustEqual 9919111717L
+    o2.characterID mustEqual 123525470L
+    ok
   }
 }

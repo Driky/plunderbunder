@@ -11,7 +11,8 @@ require [
     'bill_of_materials'
     'edit_profile'
     'asset_list'
-    ], (React, ItemSearch, LoginButton, BillOfMaterials, EditProfile, AssetList) -> 
+    'market_orders'
+    ], (React, ItemSearch, LoginButton, BillOfMaterials, EditProfile, AssetList, MarketOrders) -> 
     asset_router = ar.controllers.Assets
 
     {div, nav, a, ul, li} = React.DOM
@@ -20,6 +21,7 @@ require [
     BP_MODE = 1
     EP_MODE = 2
     AS_MODE = 3
+    MO_MODE = 4
     
     HeaderItem = React.createClass
         render: ->
@@ -51,6 +53,8 @@ require [
                 newMode = EP_MODE
             else if (event.target.id == 'asMode')
                 newMode = AS_MODE
+            else if (event.target.id == 'moMode')
+                newMode = MO_MODE
             
             @setState { mode: newMode }
             
@@ -62,17 +66,19 @@ require [
             bdf = React.createFactory BillOfMaterials
             epf = React.createFactory EditProfile
             assets = React.createFactory AssetList
+            orders = React.createFactory MarketOrders
             
             if (@state.mode == BP_MODE)
                 [
                     isf { key: 'app-isf', onItemSelected: this.selectedItem }, null
-
                     bdf { key: 'app-bdf', ref: 'blueprintDetail' }, null
                 ]
             else if (@state.mode == EP_MODE)
                 epf { key: 'epf', profile: @refs.loginbutton.state.profile }, null
             else if @state.mode == AS_MODE
                 assets { key: 'assets' }, null
+            else if (@state.mode == MO_MODE)
+                orders { key: 'orders' }
             else
                 ""
             
@@ -106,7 +112,13 @@ require [
                             onClick: @setMode
                             id: 'asMode'
                             label: "Assets"
-                        }
+                        }, null
+                        hi {
+                            key: 'orders'
+                            onClick: @setMode
+                            id: 'moMode'
+                            label: 'Orders'
+                        }, null
                     ]
                     ul { key: 'navright', className: 'nav navbar-nav navbar-right' }, [
                         lb { 

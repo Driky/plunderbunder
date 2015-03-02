@@ -62,6 +62,138 @@ class SdeFormatTests extends Specification {
     "parse a station" in {
       testBasicStation
     }
+
+    "parse a market group" in {
+      testBasicMarketGroup
+    }
+
+    "parse market group without description" in {
+      testMarketGroupWithoutDescription
+    }
+
+    "parse market group without iconID" in {
+      testMarketGroupWithoutIcon
+    }
+    
+    "parse market group without parentID" in {
+      testMarketGroupWithoutParent
+    }
+  }
+
+  def testMarketGroupWithoutParent = {
+    val rawJson = """{
+        "description": "Specialist equipment for Infantry",
+        "hasTypes": "0",
+        "iconID": "10847",
+        "marketGroupID": "350001",
+        "marketGroupName": "Infantry Gear",
+        "parentGroupID": null
+    }"""
+    
+     val js = Json.parse(rawJson)
+
+    val result = js.validate[MarketGroup]
+
+    result match {
+      case JsSuccess(marketGroup, _) => {
+        marketGroup.description  mustEqual Option("Specialist equipment for Infantry")
+        marketGroup.hasTypes must beFalse
+        marketGroup.iconID mustEqual Option(10847)
+        marketGroup.marketGroupID mustEqual 350001
+        marketGroup.marketGroupName mustEqual "Infantry Gear"
+        marketGroup.parentGroupID.isDefined must beFalse
+      }
+      case JsError(error) => {
+        ko(s"Json Parsing Error: ${error}")
+      }
+    }
+  }
+  
+  def testMarketGroupWithoutIcon = {
+    val rawJson = """{
+        "description": "Designs for ORE freighters.",
+        "hasTypes": "1",
+        "iconID": null,
+        "marketGroupID": "1949",
+        "marketGroupName": "ORE",
+        "parentGroupID": "787"
+    }"""
+
+    val js = Json.parse(rawJson)
+
+    val result = js.validate[MarketGroup]
+
+    result match {
+      case JsSuccess(marketGroup, _) => {
+        marketGroup.description  mustEqual Option("Designs for ORE freighters.")
+        marketGroup.hasTypes must beTrue
+        marketGroup.iconID.isDefined must beFalse
+        marketGroup.marketGroupID mustEqual 1949
+        marketGroup.marketGroupName mustEqual "ORE"
+        marketGroup.parentGroupID mustEqual Option(787)
+      }
+      case JsError(error) => {
+        ko(s"Json Parsing Error: ${error}")
+      }
+    }
+  }
+
+  def testMarketGroupWithoutDescription = {
+    val rawJson = """{
+        "description": null,
+        "hasTypes": "1",
+        "iconID": "20959",
+        "marketGroupID": "802",
+        "marketGroupName": "Amarr",
+        "parentGroupID": "65"
+    }"""
+
+    val js = Json.parse(rawJson)
+
+    val result = js.validate[MarketGroup]
+
+    result match {
+      case JsSuccess(marketGroup, _) => {
+        marketGroup.description.isDefined must beFalse
+        marketGroup.hasTypes must beTrue
+        marketGroup.iconID mustEqual Option(20959)
+        marketGroup.marketGroupID mustEqual 802
+        marketGroup.marketGroupName mustEqual "Amarr"
+        marketGroup.parentGroupID mustEqual Option(65)
+      }
+      case JsError(error) => {
+        ko(s"Json Parsing Error: ${error}")
+      }
+    }
+  }
+
+  def testBasicMarketGroup = {
+    val rawJson = """{
+        "description": "Small, fast vessels suited to a variety of purposes.",
+        "hasTypes": "0",
+        "iconID": "1443",
+        "marketGroupID": "5",
+        "marketGroupName": "Standard Frigates",
+        "parentGroupID": "1361"
+    }"""
+
+    val js = Json.parse(rawJson)
+
+    val result = js.validate[MarketGroup]
+
+    result match {
+      case JsSuccess(marketGroup, _) => {
+        marketGroup.description mustEqual Option("Small, fast vessels suited to a variety of purposes.")
+        marketGroup.hasTypes must beFalse
+        marketGroup.iconID mustEqual Option(1443)
+        marketGroup.marketGroupID mustEqual 5
+        marketGroup.marketGroupName mustEqual "Standard Frigates"
+        marketGroup.parentGroupID mustEqual Option(1361)
+      }
+      case JsError(error) => {
+        ko(s"Json Parsing Error: ${error}")
+      }
+    }
   }
 
   def testBasicStation = {

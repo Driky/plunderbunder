@@ -96,15 +96,27 @@ CREATE TABLE sde_stations(
     z decimal
 );
 
+CREATE TABLE sde_marketgroups (
+    description varchar(255),
+    has_types boolean,
+    icon_id int,
+    market_group_id int,
+    market_group_name varchar(255),
+    parent_group_id int
+);
+
 CREATE TABLE plunderbunder_users (
     id integer primary key auto_increment,
     eve_id integer,
     character_name varchar(64),
+    character_id integer,
     api_key_id integer,
     api_key_vcode char(64),
     access_mask integer,
     email_address varchar(255)
 );
+
+
 
 -- need to create an index on bp_materials.blueprint
     
@@ -120,5 +132,6 @@ DROP TABLE IF EXISTS sde_blueprint_activity_materials;
 DROP TABLE IF EXISTS sde_blueprint_activity_skills;
 DROP TABLE IF EXISTS sde_blueprint_activity_products;
 DROP TABLE IF EXISTS sde_stations;
+DROP TABLE IF EXISTS sde_marketgroups;
 
 DROP TABLE IF EXISTS plunderbunder_users;

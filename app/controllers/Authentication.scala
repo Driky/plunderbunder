@@ -64,6 +64,7 @@ object Authentication extends Controller {
   }
 
   def logout = Action { request =>
-    Redirect(routes.Application.index()).withNewSession
+    import scala.util.Try
+    Try(Redirect(routes.Application.index()).withNewSession).recover { case e => Ok("fail") }.get
   }
 }

@@ -14,7 +14,7 @@ import com.eveonline.crest.MarketOrder
 import com.eveonline.crest.NamedReference
 import auth.AuthenticatedAction
 
-object MarketController extends Controller {
+object MarketController extends Controller with JsonController {
 
   def reducedCnapOrders(orders: Future[List[MarketOrder]], reduction: (MarketOrder, MarketOrder) => MarketOrder) = {
     orders.flatMap { os =>

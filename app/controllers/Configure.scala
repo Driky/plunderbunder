@@ -124,6 +124,23 @@ object Configure extends Controller {
       }
     }
   }
+ 
+  def reloadMarketGroups = {
+    val jsResult = loadSdeJson("sde_scripts/json/invMarketGroups.json")
+    jsResult.validate[List[MarketGroup]] match {
+      case JsSuccess(marketGroups, _) => {
+        MarketGroup.deleteAll
+        marketGroups.foreach {
+          mg => MarketGroup.create(mg)
+        }
+        MarketGroup.updateModificationTime
+        true
+      }
+      case JsError(reason) => {
+        throw new Exception(reason.seq.toString)
+      }
+    }
+  }
 
   def loadSdeJson(filename: String) = {
     val dataFile = io.Source.fromFile(filename)
@@ -137,6 +154,7 @@ object Configure extends Controller {
     reloadStations
     reloadInventoryTypes
     reloadBlueprints
+    reloadMarketGroups
 
     Ok(JsObject(Seq("result" -> JsString("ok"))))
   }
