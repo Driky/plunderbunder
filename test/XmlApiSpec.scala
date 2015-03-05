@@ -47,10 +47,10 @@ class XmlApiSpec extends Specification {
       """
     val xml = XML.loadString(rawXml)
     import com.eveonline.sde.SolarSystem
-    val dummySystem = SolarSystem(30002904, "VFK-IV", 0, None, 
-        BigDecimal(0), BigDecimal(0), 1, 1, 
-        BigDecimal(0), BigDecimal(0), BigDecimal(0), BigDecimal(0), 
-        None, false, false, false, false, false, false, false)
+    val dummySystem = SolarSystem(30002904, "VFK-IV", 0, None,
+      BigDecimal(0), BigDecimal(0), 1, 1,
+      BigDecimal(0), BigDecimal(0), BigDecimal(0), BigDecimal(0),
+      None, false, false, false, false, false, false, false)
 
     val response = ConquerableStationResponse.fromXml(xml, Option(dummySystem))
 
@@ -138,20 +138,6 @@ class XmlApiSpec extends Specification {
     asset2.typeID mustEqual 586L
     asset2.quantity mustEqual 1
 
-    val asset1Name = LightweightItem.getByID(asset1.typeID).map { _.name }
-    asset1Name.isDefined must beTrue
-    asset1Name.getOrElse("fail") mustEqual "Zephyr"
-
-    val asset2Name = LightweightItem.getByID(asset2.typeID).map { _.name }
-    asset2Name.isDefined must beTrue
-    asset2Name.getOrElse("fail") mustEqual "Probe"
-
-    val stationO = Station.getByID(asset1.locationID)
-
-    stationO.isDefined must beTrue
-    val station = stationO.get
-    station.stationName mustEqual "Trer VIII - Moon 7 - Nugoeihuvi Corporation Development Studio"
-
     asset1.contents.length mustEqual 0
     val a2contents = asset2.contents
     a2contents.length mustEqual 2
@@ -162,12 +148,6 @@ class XmlApiSpec extends Specification {
     content1.quantity mustEqual 1
     content2.quantity mustEqual 7
 
-    val c1Name = LightweightItem.getByID(content1.typeID).map { _.name }
-
-    val c2Name = LightweightItem.getByID(content2.typeID).map { _.name }
-
-    c1Name mustEqual Some("Expanded Probe Launcher I")
-    c2Name mustEqual Some("Combat Scanner Probe I")
   }
 
   def testMarketOrderXml = {
