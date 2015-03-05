@@ -1,6 +1,8 @@
 Plunderbunder
 =============
 
+[![Build Status](https://travis-ci.org/HandsomeCam/plunderbunder.svg?branch=master)](https://travis-ci.org/HandsomeCam/plunderbunder)
+
 This is a web-app to interact with the EVE Online CREST API.
 
 Functionality

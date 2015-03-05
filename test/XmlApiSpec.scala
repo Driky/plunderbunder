@@ -46,7 +46,13 @@ class XmlApiSpec extends Specification {
       
       """
     val xml = XML.loadString(rawXml)
-    val response = ConquerableStationResponse.fromXml(xml)
+    import com.eveonline.sde.SolarSystem
+    val dummySystem = SolarSystem(30002904, "VFK-IV", 0, None, 
+        BigDecimal(0), BigDecimal(0), 1, 1, 
+        BigDecimal(0), BigDecimal(0), BigDecimal(0), BigDecimal(0), 
+        None, false, false, false, false, false, false, false)
+
+    val response = ConquerableStationResponse.fromXml(xml, Option(dummySystem))
 
     response.apiVersion mustEqual 2
 

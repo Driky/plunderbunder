@@ -15,14 +15,18 @@ case class ConquerableStationResponse(
 
 object ConquerableStationResponse {
 
-  def stationFromXml(node: scala.xml.Node): Station = {
+  // The optional parameter is required for unit testing & CI to work correctly
+  // Without requiring a loaded database
+  def stationFromXml(node: scala.xml.Node, solarSystem: Option[SolarSystem] = None): Station = {
     val stationID = (node \@ "stationID").toInt
     val stationName = (node \@ "stationName")
     val stationTypeID = (node \@ "stationTypeID").toInt
     val solarSystemID = (node \@ "solarSystemID").toInt
     val corporationID = (node \@ "corporationID").toLong
 
-    SolarSystem.getByID(solarSystemID).fold(
+    val resolvedSystem = solarSystem.fold(SolarSystem.getByID(solarSystemID))(s => Option(s))
+    
+    resolvedSystem.fold(
       throw new Exception("Solar system not found!"))(solarSystem => {
         val constellationID = solarSystem.constellationID
         val regionID = solarSystem.regionID
@@ -38,7 +42,7 @@ object ConquerableStationResponse {
 
   }
 
-  def fromXml(node: scala.xml.Node): ConquerableStationResponse = {
+  def fromXml(node: scala.xml.Node, solarSystem: Option[SolarSystem] = None): ConquerableStationResponse = {
     val apiVersion = (node \@ "version").toInt
 
     val timeNodes = (node \ "currentTime")
@@ -49,7 +53,7 @@ object ConquerableStationResponse {
     val cacheTime = DateTime.parse(cacheTimeNodes.head.text, format).withZoneRetainFields(DateTimeZone.UTC)
 
     val stationNodes = (node \ "result") \ "rowset" \ "row"
-    val stations = stationNodes.map { stationFromXml(_) }.toList
+    val stations = stationNodes.map { stationFromXml(_, solarSystem) }.toList
 
     ConquerableStationResponse(apiVersion, currentTime, cacheTime, stations)
   }
