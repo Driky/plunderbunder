@@ -2,7 +2,7 @@ package com.eveonline.xmlapi.requests
 
 import auth.UserProfile
 
-import com.eveonline.xmlapi.AssetResponse
+import com.eveonline.xmlapi.{ Asset, AssetResponse }
 
 import scala.xml.XML
 
@@ -11,7 +11,7 @@ import scala.concurrent.Future
 
 object CharacterAssets extends XmlApiRequest {
 
-  def listForCharacter(profile: UserProfile) = {
+  def listForCharacter(profile: UserProfile): Future[List[Asset]] = {
     val keyID = profile.apiKey
     val vCode = profile.apiVCode
     val assetUrl = "https://api.eveonline.com/char/AssetList.xml.aspx"
@@ -21,7 +21,7 @@ object CharacterAssets extends XmlApiRequest {
     response.map { r =>
       {
         val assetResponse = AssetResponse.fromXml(XML.loadString(r.body))
-        
+
         assetResponse.assets
       }
     }

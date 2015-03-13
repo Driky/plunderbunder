@@ -9,9 +9,7 @@ case class ConquerableStationResponse(
   apiVersion: Int,
   responseTime: DateTime,
   cachedUntil: DateTime,
-  stations: List[Station]) {
-
-}
+  stations: List[Station])
 
 object ConquerableStationResponse {
 
@@ -25,7 +23,7 @@ object ConquerableStationResponse {
     val corporationID = (node \@ "corporationID").toLong
 
     val resolvedSystem = solarSystem.fold(SolarSystem.getByID(solarSystemID))(s => Option(s))
-    
+
     resolvedSystem.fold(
       throw new Exception("Solar system not found!"))(solarSystem => {
         val constellationID = solarSystem.constellationID

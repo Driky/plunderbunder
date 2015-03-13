@@ -1,9 +1,8 @@
 package com.eveonline.sde
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
+import play.api.libs.json.{ Reads, __ }
 
-import play.api.libs.functional.syntax._
+import play.api.libs.functional.syntax._ // scalastyle:ignore
 
 case class BlueprintActivities(
   copying: Option[CopyingActivity],

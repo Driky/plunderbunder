@@ -1,10 +1,9 @@
 package com.eveonline.sde
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
-import play.api.libs.functional.syntax._
+import play.api.libs.json.{ Json, __, Reads }
+import play.api.libs.functional.syntax._ // scalastyle:ignore
 
-import anorm._
+import anorm.SQL
 import play.api.db.DB
 
 import play.api.Play.current
@@ -35,8 +34,7 @@ case class SolarSystem(
   yMax: BigDecimal,
   yMin: BigDecimal,
   zMax: BigDecimal,
-  zMin: BigDecimal*/ ) {
-}
+  zMin: BigDecimal*/ )
 
 object SolarSystem extends BaseDataset {
   implicit val solarSystemReads =
@@ -65,11 +63,11 @@ object SolarSystem extends BaseDataset {
   // Not terribly confident this would write out correctly
   //implicit val solarSystemWrites = Json.writes[SolarSystem]
 
-  def dataSetName = "sde_solarsystems"
+  def dataSetName: String = "sde_solarsystems"
 
-  def create(value: SolarSystem) = {
+  def create(value: SolarSystem): Option[Long] = {
     DB.withConnection { implicit c =>
-      val sql = SQL(s"""INSERT INTO ${dataSetName} 
+      val sql = SQL(s"""INSERT INTO ${dataSetName}
         (solar_system_id, solar_system_name,
         region_id, faction_id, radius, luminosity, sun_type_id, constellation_id,
         x, y, z, security, security_class,
@@ -78,8 +76,8 @@ object SolarSystem extends BaseDataset {
          {solarSystemID}, {solarSystemName},
          {regionID}, {factionID},
          {radius}, {luminosity},
-         {sunTypeID}, {constellationID},  
-         {x}, {y}, {z}, 
+         {sunTypeID}, {constellationID},
+         {x}, {y}, {z},
          {security}, {securityClass},
          {border}, {constellation},
          {corridor}, {fringe},

@@ -1,13 +1,9 @@
 package com.eveonline.crest
 
-import play.api._
+import play.api.libs.json.{ Reads, __ }
+import play.api.libs.functional.syntax._ // scalastyle:ignore
 
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-
-case class TokenResponse(refreshToken: Option[String], tokenType: String, accessToken: String, expiresIn: Long) {
-
-}
+case class TokenResponse(refreshToken: Option[String], tokenType: String, accessToken: String, expiresIn: Long)
 
 object TokenResponseSerializer {
   implicit val tokenResponseReads: Reads[TokenResponse] = (

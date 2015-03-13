@@ -1,7 +1,5 @@
 package com.eveonline.xmlapi
 
-import com.eveonline.xmlapi.requests._
-
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.joda.time.format.DateTimeFormat
 
@@ -13,8 +11,7 @@ case class ApiKeyInfoResponse(
   cachedUntil: DateTime,
   accessMask: Long,
   expires: Option[DateTime],
-  characters: List[Character]) {
-}
+  characters: List[Character])
 
 object ApiKeyInfoResponse {
   def fromXml(node: scala.xml.Node): ApiKeyInfoResponse = {

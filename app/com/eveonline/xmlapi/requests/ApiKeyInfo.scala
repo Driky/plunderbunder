@@ -2,8 +2,7 @@ package com.eveonline.xmlapi.requests
 
 import auth.UserProfile
 
-import com.eveonline.xmlapi.ApiKeyInfoResponse
-import com.eveonline.xmlapi.Character
+import com.eveonline.xmlapi.{ ApiKeyInfoResponse, Character }
 
 import play.api.Logger
 
@@ -14,7 +13,7 @@ import scala.concurrent.Future
 import org.joda.time.DateTime
 
 object ApiKeyInfo extends XmlApiRequest {
-  def verifyKey(profile: UserProfile) = {
+  def verifyKey(profile: UserProfile): Future[ApiKeyInfoResponse] = {
     val keyID = profile.apiKey
     val vCode = profile.apiVCode
 

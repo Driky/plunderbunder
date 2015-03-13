@@ -1,8 +1,8 @@
 package com.eveonline.crest
 
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
-import org.joda.time._
+import play.api.libs.json.{ Reads, __ }
+import play.api.libs.functional.syntax._ // scalastyle:ignore
+import org.joda.time.{ DateTime, DateTimeZone }
 
 case class VerifyResponse(
   expiresOn: DateTime,
@@ -10,9 +10,7 @@ case class VerifyResponse(
   scopes: String,
   characterOwnerHash: String,
   characterID: Long,
-  tokenType: String) {
-
-}
+  tokenType: String)
 
 object VerifyResponseSerializer {
 

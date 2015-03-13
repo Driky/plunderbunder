@@ -1,22 +1,27 @@
 package controllers
 
-import play.api._
-import play.api.mvc._
+import anorm.SQL
+
 import play.api.Play.current
-import anorm._
 import play.api.db.DB
 import play.api.Play.current
-import play.api.libs.json._
-import com.eveonline.crest.requests.RegionalMarketOrders
+import play.api.mvc.{ Action, Controller, AnyContent }
+import play.api.libs.json.Json
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import com.eveonline.crest.MarketOrder
-import com.eveonline.crest.NamedReference
+
+import com.eveonline.crest.{ MarketOrder, NamedReference }
+import com.eveonline.crest.requests.RegionalMarketOrders
+
 import auth.AuthenticatedAction
 
 object MarketController extends Controller with JsonController {
 
-  def reducedCnapOrders(orders: Future[List[MarketOrder]], reduction: (MarketOrder, MarketOrder) => MarketOrder) = {
+  def reducedCnapOrders(
+    orders: Future[List[MarketOrder]],
+    reduction: (MarketOrder, MarketOrder) => MarketOrder): Future[MarketOrder] = {
+
     orders.flatMap { os =>
       {
         val cnapOrders = os.filter { o => o.location.href.endsWith("/60003760/") }
@@ -32,11 +37,12 @@ object MarketController extends Controller with JsonController {
     buyPrice: Long,
     sellLocation: NamedReference,
     sellPrice: Long)
+
   object MarketRates {
     implicit val marketRatesFormat = Json.format[MarketRates]
   }
 
-  def jitaPriceForItem(itemID: Long) = AuthenticatedAction.async { implicit request =>
+  def jitaPriceForItem(itemID: Long): Action[AnyContent] = AuthenticatedAction.async { implicit request =>
 
     val theForgeID = 10000002
 

@@ -2,16 +2,15 @@ package com.eveonline.crest
 
 import play.api.Play.current
 
-import play.api.libs.ws._
-import play.api.libs.json._
+import play.api.libs.ws.{ WS, WSAuthScheme }
+import play.api.libs.json.{ JsError, JsSuccess }
 import play.api.Logger
+import scala.concurrent.Future
 
-import TokenResponseSerializer._
-import VerifyResponseSerializer._
+import TokenResponseSerializer.tokenResponseReads
+import VerifyResponseSerializer.reads
 
-class InvalidTokenException extends Exception {
-
-}
+class InvalidTokenException extends Exception
 
 case class SignOnTokens(accessToken: String, refreshToken: Option[String])
 
@@ -20,15 +19,15 @@ object SingleSignOn {
   val generateTokenURI = "https://login.eveonline.com/oauth/token"
   val verifyTokenURI = "https://login.eveonline.com/oauth/verify"
 
-  def generateAuthTokenFromRefreshToken(token: String) = {
+  def generateAuthTokenFromRefreshToken(token: String): Future[SignOnTokens] = {
     generateAuthToken("refresh_token", "refresh_token", token)
   }
 
-  def generateAuthTokenFromAuthCode(code: String) = {
+  def generateAuthTokenFromAuthCode(code: String): Future[SignOnTokens] = {
     generateAuthToken("authorization_code", "code", code)
   }
 
-  def generateAuthToken(authMethod: String, authName: String, code: String) = {
+  def generateAuthToken(authMethod: String, authName: String, code: String): Future[SignOnTokens] = {
 
     implicit val context = scala.concurrent.ExecutionContext.Implicits.global
 
@@ -68,7 +67,7 @@ object SingleSignOn {
     }
   }
 
-  def verifyAuthToken(authToken: String) = {
+  def verifyAuthToken(authToken: String): Future[VerifyResponse] = {
     implicit val context = scala.concurrent.ExecutionContext.Implicits.global
 
     val tokenEndpoint = WS.url(verifyTokenURI)

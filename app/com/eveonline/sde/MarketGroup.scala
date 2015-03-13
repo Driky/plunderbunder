@@ -1,11 +1,9 @@
 package com.eveonline.sde
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
+import play.api.libs.json.{ Json, Reads, __ }
+import play.api.libs.functional.syntax._ // scalastyle:ignore
 
-import play.api.libs.functional.syntax._
-
-import anorm._
+import anorm.SQL
 import play.api.db.DB
 
 import play.api.Play.current
@@ -16,9 +14,7 @@ case class MarketGroup(
   iconID: Option[Long],
   marketGroupID: Int,
   marketGroupName: String,
-  parentGroupID: Option[Int]) {
-
-}
+  parentGroupID: Option[Int])
 
 object MarketGroup extends BaseDataset {
 
@@ -30,16 +26,16 @@ object MarketGroup extends BaseDataset {
     (__ \ "marketGroupName").read[String] and
     (__ \ "parentGroupID").read[Option[String]].map { _.flatMap(v => Option(v.toInt)) })(MarketGroup.apply _)
 
-  def dataSetName = "sde_marketgroups"
+  def dataSetName: String = "sde_marketgroups"
 
-  def create(value: MarketGroup) = {
+  def create(value: MarketGroup): Option[Long] = {
     DB.withConnection { implicit c =>
-      val sql = SQL(s"""INSERT INTO ${dataSetName} 
+      val sql = SQL(s"""INSERT INTO ${dataSetName}
         (description, has_types, icon_id,
         market_group_id, market_group_name, parent_group_id
         ) VALUES (
          {description}, {hasTypes},
-         {iconID}, {marketGroupID}, {marketGroupName}, 
+         {iconID}, {marketGroupID}, {marketGroupName},
          {parentGroupID}
          );""").on(
         'description -> value.description,

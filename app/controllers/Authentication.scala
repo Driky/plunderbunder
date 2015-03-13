@@ -1,27 +1,26 @@
 package controllers
 
-import play.api._
-import play.api.mvc._
+import play.api.Logger
+import play.api.mvc.{ Controller, Session, Action, AnyContent, Result }
 import play.api.Play.current
-import play.api.libs.ws._
 import scala.concurrent.Future
-import com.eveonline.crest.SingleSignOn._
-import com.eveonline.crest.TokenResponse
-import com.eveonline.crest.TokenResponseSerializer._
-import com.eveonline.crest.SingleSignOn._
-import com.eveonline.crest.InvalidTokenException
-import com.eveonline.crest.VerifyResponse
-import com.eveonline.crest.SignOnTokens
+
+import com.eveonline.crest.SingleSignOn
+import auth.{ AuthenticatedAction, AuthenticationProfile }
+import com.eveonline.crest.{ InvalidTokenException, SignOnTokens, TokenResponse, VerifyResponse }
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.libs.json.Json
-import auth._
-
-import anorm._
-import play.api.db.DB
+import scala.util.Try
 
 object Authentication extends Controller {
 
-  def establishSession(existingSession: Session, tokens: SignOnTokens, verifyResult: VerifyResponse, userID: Long) = {
+  def establishSession(
+    existingSession: Session,
+    tokens: SignOnTokens,
+    verifyResult: VerifyResponse,
+    userID: Long): Future[Result] = {
+
     val profile = AuthenticationProfile(
       tokens.accessToken,
       verifyResult.expiresOn,
@@ -35,7 +34,7 @@ object Authentication extends Controller {
     Future(Redirect(routes.Application.index()).withSession(newSession))
   }
 
-  def authCallback = Action.async { request =>
+  def authCallback: Action[AnyContent] = Action.async { request =>
 
     val codeO = request.getQueryString("code")
     val stateO = request.getQueryString("state")
@@ -46,11 +45,11 @@ object Authentication extends Controller {
       codeO.fold {
         Future(BadRequest("Code is missing, not ok"))
       } { authorizationCode =>
-        val authToken = generateAuthTokenFromAuthCode(authorizationCode)
+        val authToken = SingleSignOn.generateAuthTokenFromAuthCode(authorizationCode)
 
         authToken.flatMap { tokens =>
           {
-            val verifyFuture = verifyAuthToken(tokens.accessToken)
+            val verifyFuture = SingleSignOn.verifyAuthToken(tokens.accessToken)
             verifyFuture.flatMap { vr =>
               {
                 val userID = AuthenticatedAction.createUserIfApplicable(vr).getOrElse(0L)
@@ -63,8 +62,7 @@ object Authentication extends Controller {
     }
   }
 
-  def logout = Action { request =>
-    import scala.util.Try
-    Try(Redirect(routes.Application.index()).withNewSession).recover { case e => Ok("fail") }.get
+  def logout: Action[AnyContent] = Action { request =>
+    Try(Redirect(routes.Application.index()).withNewSession).recover { case e: Throwable => Ok("fail") }.get
   }
 }

@@ -7,8 +7,7 @@ case class AssetResponse(
   apiVersion: Int,
   responseTime: DateTime,
   cachedUntil: DateTime,
-  assets: List[Asset]) {
-}
+  assets: List[Asset])
 
 object AssetResponse {
 

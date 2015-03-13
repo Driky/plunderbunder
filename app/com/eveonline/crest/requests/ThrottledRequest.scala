@@ -6,7 +6,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.Logger
 
 class ThrottledRequest extends Actor {
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     case Get(request) => {
       sender ! request.get()
     }

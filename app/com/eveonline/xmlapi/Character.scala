@@ -8,7 +8,7 @@ case class Character(
   allianceID: Long,
   allianceName: String,
   factionID: Int,
-  factionName: String) {}
+  factionName: String)
 
 object Character {
   def fromXml(node: scala.xml.Node): Character = {

@@ -1,9 +1,8 @@
 package com.eveonline.sde
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
+import play.api.libs.json.{ Json, Reads, __ }
 
-import play.api.libs.functional.syntax._
+import play.api.libs.functional.syntax._ // scalastyle:ignore
 
 case class ManufacturingActivity(
   id: Long,
@@ -14,9 +13,7 @@ case class ManufacturingActivity(
   extends BlueprintActivity(
     id, activityTime,
     materials, skills, products,
-    BlueprintActivity.Manufacturing) {
-
-}
+    BlueprintActivity.Manufacturing)
 
 object ManufacturingActivity {
   implicit val manufacturingActivityReads = (
@@ -31,5 +28,4 @@ object ManufacturingActivity {
     (__ \ "products").readNullable[List[BlueprintActivity.Product]].map {
       _.fold(List[BlueprintActivity.Product]())(l => l)
     })(ManufacturingActivity.apply _)
-
 }

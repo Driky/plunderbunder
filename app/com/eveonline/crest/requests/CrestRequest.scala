@@ -5,14 +5,14 @@ import akka.actor.Props
 import akka.event.Logging
 import akka.util.Timeout
 import play.api.libs.concurrent.Akka.system
-import akka.contrib.throttle._
-import akka.contrib.throttle.Throttler._
+import akka.contrib.throttle.TimerBasedThrottler
+import akka.contrib.throttle.Throttler.{ RateInt, SetTarget }
 import akka.pattern.ask
-import scala.concurrent.duration._
+import scala.concurrent.duration._ // scalastyle:ignore
 
 import play.api.Play.current
 import play.api.Logger
-import play.api.libs.ws._
+import play.api.libs.ws.{ WS, WSResponse }
 import play.api.cache.Cache
 
 import scala.concurrent.Future
@@ -21,7 +21,7 @@ import com.eveonline.crest.FakeResponse
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object CrestRequest {
-  def initialize = {
+  def initialize {
     val throttledRequestActor = system.actorOf(Props[ThrottledRequest], "throttled")
     val throttler = system.actorOf(Props(classOf[TimerBasedThrottler], 30 msgsPer 1.second), "throttler")
     throttler ! SetTarget(Some(throttledRequestActor))
@@ -29,11 +29,16 @@ object CrestRequest {
 }
 
 trait CrestRequest {
-  def get(url: String, accessToken: String, salt: Option[String] = None, acceptType: Option[String] = None) = {
+  def get(
+    url: String,
+    accessToken: String,
+    salt: Option[String] = None,
+    acceptType: Option[String] = None): Future[WSResponse] = {
 
     val config = current.configuration
+    val defaultTimeout = 20
     val offlineMode = config.getBoolean("development.offline").getOrElse(false)
-    val timeoutDuration = config.getInt("crest.timeout").getOrElse(20)
+    val timeoutDuration = config.getInt("crest.timeout").getOrElse(defaultTimeout)
 
     val cacheKey = salt.fold(url)(sel => s"${sel}-${url}")
 
@@ -42,11 +47,9 @@ trait CrestRequest {
       val cachedValue = Cache.getAs[WSResponse](cacheKey)
 
       cachedValue.fold({
-
         val acceptHeader = acceptType.fold("X-Client-WIP" -> "IGNORE THIS HEADER")("Accept" -> _)
         val request = WS.url(url)
           .withHeaders("Authorization" -> s"Bearer ${accessToken}", acceptHeader)
-          
 
         // TODO: add version
         // TODO: add content-type
@@ -59,41 +62,42 @@ trait CrestRequest {
 
         result foreach { res =>
           if (res.status == 200) {
-            
             if (acceptType.isEmpty) {
               val resultContentType = res.header("Content-Type")
               Logger.error(s"[!!] Request to ${url} is missing an accept header. Currently it is returning ${resultContentType}")
             }
-            
-            // Extract cached-until
-            val cacheControl = res.header("Cache-Control")
 
-            cacheControl.foreach { ctl =>
-              {
-
-                val maxAgeSetting = ctl.split(",\\s*").filter { _.startsWith("max-age") }.headOption
-
-                maxAgeSetting.foreach { maxAge =>
-                  {
-
-                    // save to cache
-
-                    val expiration = maxAge.split("=")(1).toInt
-                    Cache.set(cacheKey, res, expiration)
-                  }
-                }
-              }
-            }
-
+            cacheResult(cacheKey, res)
           }
         }
 
         result
-      })({ cached =>
-        Future { cached }
-      })
+      })(Future(_))
     } else {
-      Future(FakeResponse("""{
+      fakeResponseFuture
+    }
+  }
+
+  private def cacheResult(cacheKey: String, response: WSResponse) {
+    val cacheControlHeader = response.header("Cache-Control")
+    // Extract cached-until
+    cacheControlHeader.foreach { cacheControl =>
+      {
+        val maxAgeSetting = cacheControl.split(",\\s*").filter { _.startsWith("max-age") }.headOption
+
+        maxAgeSetting.foreach { maxAge =>
+          {
+            // save to cache
+            val expiration = maxAge.split("=")(1).toInt
+            Cache.set(cacheKey, response, expiration)
+          }
+        }
+      }
+    }
+  }
+
+  def fakeResponseFuture: Future[FakeResponse] = {
+    Future(FakeResponse("""{
         "totalCount": 1,
         "items": [
             {
@@ -108,7 +112,6 @@ trait CrestRequest {
             }
         ]
         }"""))
-    }
   }
 
   val crestEndpoint = "https://crest-tq.eveonline.com"

@@ -1,11 +1,10 @@
 package com.eveonline.sde
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
+import play.api.libs.json.{ Reads, __ }
 
-import play.api.libs.functional.syntax._
+import play.api.libs.functional.syntax._ // scalastyle:ignore
 
-import anorm._
+import anorm.SQL
 import play.api.db.DB
 
 import play.api.Play.current
@@ -23,13 +22,11 @@ case class InventoryType(
   mass: BigDecimal,
   portionSize: Int,
   published: Int,
-  volume: BigDecimal) {
-
-}
+  volume: BigDecimal)
 
 object InventoryType extends BaseDataset {
 
-  def dataSetName = "sde_inventorytypes"
+  def dataSetName: String = "sde_inventorytypes"
 
   implicit val inventoryTypeReads = (
     (__ \ "typeID").read[String].map { _.toLong } and
@@ -46,9 +43,9 @@ object InventoryType extends BaseDataset {
     (__ \ "published").read[String].map { _.toInt } and
     (__ \ "volume").read[BigDecimal])(InventoryType.apply _)
 
-  def create(value: InventoryType) = {
+  def create(value: InventoryType): Option[Long] = {
     DB.withConnection { implicit c =>
-      val sql = SQL(s"""INSERT INTO ${dataSetName} 
+      val sql = SQL(s"""INSERT INTO ${dataSetName}
         (id, name,
         base_price, capacity,
         chance_of_duplicating, description,
@@ -59,7 +56,7 @@ object InventoryType extends BaseDataset {
          {id}, {name},
          {basePrice}, {capacity},
          {chanceOfDuplicating}, {description},
-         {groupID}, {marketGroupID},  
+         {groupID}, {marketGroupID},
          {mass}, {portionSize},
          {published}, {raceID},
          {volume}
@@ -89,7 +86,7 @@ object InventoryType extends BaseDataset {
           group_id, market_group_id,
           mass, portion_size,
           published, race_id,
-          volume 
+          volume
         FROM sde_inventorytypes
         WHERE id={typeID};
         """).on('typeID -> typeID)
@@ -114,9 +111,9 @@ object InventoryType extends BaseDataset {
       }.headOption
     }
   }
-  
+
   def mapForIDs(typeIDs: List[Long]): Map[Long, InventoryType] = {
-     val result = for {
+    val result = for {
       tid <- typeIDs
       item <- getByID(tid)
     } yield (tid -> item)

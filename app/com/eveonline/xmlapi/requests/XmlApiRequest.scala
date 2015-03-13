@@ -1,8 +1,8 @@
 package com.eveonline.xmlapi.requests
 
 import play.api.Play.current
-import play.api.libs.ws._
 import play.api.Logger
+import play.api.libs.ws.{ WS, WSResponse }
 import play.api.cache.Cache
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -17,7 +17,7 @@ import com.eveonline.crest.FakeResponse
 
 trait XmlApiRequest {
 
-  def parseEveTime(nodes: Seq[Node]) = {
+  def parseEveTime(nodes: Seq[Node]): DateTime = {
     if (nodes.length > 0) {
       val format = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
       val currentTime = DateTime.parse(nodes.head.text, format).withZoneRetainFields(DateTimeZone.UTC)
@@ -27,7 +27,7 @@ trait XmlApiRequest {
     }
   }
 
-  def get(url: String, apiKeyID: Option[Long] = None, vCode: Option[String] = None) = {
+  def get(url: String, apiKeyID: Option[Long] = None, vCode: Option[String] = None): Future[WSResponse] = {
 
     val config = current.configuration
     val offlineMode = config.getBoolean("development.offline").getOrElse(false)

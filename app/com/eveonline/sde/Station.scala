@@ -1,10 +1,9 @@
 package com.eveonline.sde
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
-import play.api.libs.functional.syntax._
+import play.api.libs.json.{ Json, Reads, __ }
+import play.api.libs.functional.syntax._ // scalastyle:ignore
 
-import anorm._
+import anorm.SQL
 import play.api.db.DB
 import anorm.SqlParser.{ scalar }
 
@@ -31,13 +30,13 @@ case class Station(
   y: Option[BigDecimal],
   z: Option[BigDecimal]) {
 
-  // Used to update the portions of a station 
+  // Used to update the portions of a station
   // likely to change (eg. name, corp)
-  def updateVolatileFields = {
+  def updateVolatileFields: Int = {
     DB.withConnection { implicit c =>
-      val sql = SQL("""UPDATE sde_stations 
-        SET 
-          station_name={stationName}, 
+      val sql = SQL("""UPDATE sde_stations
+        SET
+          station_name={stationName},
           corporation_id={corporationID}
         WHERE station_id={stationID};""").on(
         'stationID -> stationID,
@@ -48,9 +47,9 @@ case class Station(
     }
   }
 
-  def upsert = {
+  def upsert: Option[Long] = {
     DB.withConnection { implicit c =>
-      val existingCount = SQL("""SELECT COUNT(station_id) FROM sde_stations 
+      val existingCount = SQL("""SELECT COUNT(station_id) FROM sde_stations
         WHERE station_id={stationID}""").on('stationID -> stationID).as(scalar[Long].single)
 
       if (existingCount == 1) {
@@ -84,24 +83,24 @@ object Station extends BaseDataset {
     (__ \ "y").read[Option[BigDecimal]] and
     (__ \ "z").read[Option[BigDecimal]])(Station.apply _)
 
-  def dataSetName = "sde_stations"
+  def dataSetName: String = "sde_stations"
 
-  def create(value: Station) = {
+  def create(value: Station): Option[Long] = {
     DB.withConnection { implicit c =>
-      val sql = SQL(s"""INSERT INTO ${dataSetName} 
-        (station_id, constellation_id, corporation_id, 
+      val sql = SQL(s"""INSERT INTO ${dataSetName}
+        (station_id, constellation_id, corporation_id,
     docking_cost_per_volume, max_ship_volume_dockable,
     office_rental_cost, operation_id, region_id,
     reprocessing_efficiency, reprocessing_hangar_flag, reprocessing_stations_take,
     security, solar_system_id,
     station_name, station_type_id,
-    x, y, z) 
+    x, y, z)
     VALUES (
          {stationID}, {constellationID},
          {corporationID}, {dockingCostPerVolume},
          {maxShipVolumeDockable}, {officeRentalCost},
-         {operationID}, {regionID},  
-         {reprocessingEfficiency}, {reprocessingHangarFlag}, {reprocessingStationsTake}, 
+         {operationID}, {regionID},
+         {reprocessingEfficiency}, {reprocessingHangarFlag}, {reprocessingStationsTake},
          {security}, {solarSystemID},
          {stationName}, {stationTypeID},
          {x}, {y}, {z}
@@ -130,13 +129,13 @@ object Station extends BaseDataset {
 
   def getByID(stationID: Int): Option[Station] = {
     DB.withConnection { implicit c =>
-      val sql = SQL(s"""SELECT station_id, constellation_id, corporation_id, 
+      val sql = SQL(s"""SELECT station_id, constellation_id, corporation_id,
     docking_cost_per_volume, max_ship_volume_dockable,
     office_rental_cost, operation_id, region_id,
     reprocessing_efficiency, reprocessing_hangar_flag, reprocessing_stations_take,
     security, solar_system_id,
     station_name, station_type_id,
-    x, y, z 
+    x, y, z
         FROM ${dataSetName}
       WHERE station_id={id}""").on('id -> stationID)
 

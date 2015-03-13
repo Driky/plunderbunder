@@ -1,11 +1,9 @@
 package controllers
 
-import auth.AuthenticatedAction
-import auth.AuthenticatedRequest
-import play.api._
-import play.api.mvc._
+import play.api.Logger
+import play.api.mvc.{ Controller, Action, AnyContent, Result }
 
-import play.api.libs.json._
+import play.api.libs.json.{ Json, JsBoolean, JsError, JsNumber, JsObject, JsValue, JsSuccess }
 
 import scala.concurrent.Future
 
@@ -13,19 +11,21 @@ import play.api.Play.current
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import auth.UserProfile
+import auth.{ UserProfile, AuthenticatedAction, AuthenticatedRequest }
 
-import com.eveonline.xmlapi.requests.CharacterAssets
-import com.eveonline.sde.Station
-import com.eveonline.sde.InventoryType
+import com.eveonline.xmlapi.Asset
+import com.eveonline.xmlapi.requests.{ ApiKeyInfo, CharacterAssets, MarketOrders }
+import com.eveonline.sde.{ Station, InventoryType }
+
+import utility.ExceptionLogger
 
 object User extends Controller with JsonController {
 
-  def user = AuthenticatedAction { authedRequest =>
+  def user: Action[AnyContent] = AuthenticatedAction { authedRequest =>
     Ok(Json.toJson(authedRequest.authenticationProfile))
   }
 
-  def userProfile = AuthenticatedAction { authedRequest =>
+  def userProfile: Action[AnyContent] = AuthenticatedAction { authedRequest =>
     val userID = authedRequest.authenticationProfile.userID
     val userProfileO = UserProfile.getWithID(userID)
 
@@ -39,7 +39,7 @@ object User extends Controller with JsonController {
   case class UpdateUserRequest(apiKey: Option[Long], apiVCode: Option[String], emailAddress: Option[String])
   object UpdateUserRequest { implicit val format = Json.format[UpdateUserRequest] }
 
-  def updateUserProfile = AuthenticatedAction.async(parse.json) { authedRequest =>
+  def updateUserProfile: Action[JsValue] = AuthenticatedAction.async(parse.json) { authedRequest =>
     val body = authedRequest.body
 
     Logger.info("RBody: " + body.toString())
@@ -49,67 +49,53 @@ object User extends Controller with JsonController {
         val userID = authedRequest.authenticationProfile.userID
         val userProfileO = UserProfile.getWithID(userID)
 
-        userProfileO.fold(
-          {
-            BadJsonRequestFuture("Invalid User")
-          })(profile => {
-            if (uur.apiKey.isDefined) {
-              profile.updateApiKey(uur.apiKey.get)
-            }
+        userProfileO.fold(BadJsonRequestFuture("Invalid User"))(profile => {
 
-            if (uur.apiVCode.isDefined) {
-              profile.updateApiVCode(uur.apiVCode.get)
-            }
+          uur.apiKey.foreach { profile.updateApiKey(_) }
+          uur.apiVCode.foreach { profile.updateApiVCode(_) }
+          uur.emailAddress.foreach { profile.updateEmailAddress(_) }
 
-            if (uur.emailAddress.isDefined) {
-              profile.updateEmailAddress(uur.emailAddress.get)
-            }
+          if (uur.apiKey.isDefined || uur.apiVCode.isDefined) {
+            val updatedProfile = UserProfile.getWithID(userID).get
+            val apiKeyResponse = ApiKeyInfo.verifyKey(updatedProfile)
 
-            if (uur.apiKey.isDefined || uur.apiVCode.isDefined) {
-              import com.eveonline.xmlapi.requests._
-              val updatedProfile = UserProfile.getWithID(userID).get
-              val apiKeyResponse = ApiKeyInfo.verifyKey(updatedProfile)
+            apiKeyResponse.map { resp =>
+              {
+                val matchingCharacter = resp.characters.find { _.characterName.equals(updatedProfile.characterName) }
+                updateAPIKeyAttributes(updatedProfile, resp.accessMask, matchingCharacter)
 
-              apiKeyResponse.map { resp =>
-                {
-                  val accessMask = resp.accessMask
-                  updatedProfile.updateAccessMask(Option(accessMask))
+                val resultFields = JsObject(
+                  "keyIsValid" -> JsBoolean(true) :: "accessMask" -> JsNumber(resp.accessMask) :: Nil)
 
-                  val matchingCharacter = resp.characters.find { _.characterName.equals(updatedProfile.characterName) }
+                OkJson(resultFields)
+              }
+            }.recoverWith({
+              case e: Exception => {
+                Logger.debug(ExceptionLogger(e).printableStackTrace)
+                val resultFields = JsObject(Seq("keyIsValid" -> JsBoolean(false)))
+                OkJsonFuture(resultFields)
+              }
+            })
 
-                  val updatedCharacterID = matchingCharacter.map { _.characterID }
-                  updatedProfile.updateCharacterID(updatedCharacterID)
-
-                  val resultFields = JsObject(
-                    "keyIsValid" -> JsBoolean(true)
-                      :: "accessMask" -> JsNumber(accessMask)
-                      :: Nil)
-
-                  OkJson(resultFields)
-                }
-              }.recoverWith({
-                case e: Exception => {
-                  import java.io.{ PrintWriter, StringWriter }
-                  val sw = new StringWriter()
-                  val pw = new PrintWriter(sw)
-                  e.printStackTrace(pw)
-                  Logger.debug(sw.toString())
-                  val resultFields = JsObject(Seq("keyIsValid" -> JsBoolean(false)))
-                  OkJsonFuture(resultFields)
-                }
-              })
-
-            } else {
-              OkJsonFuture()
-            }
-
-          })
+          } else {
+            OkJsonFuture()
+          }
+        })
       }
       case JsError(e) => BadJsonRequestFuture("Invalid JSON")
     }
   }
 
-  import com.eveonline.xmlapi.Asset
+  private def updateAPIKeyAttributes(
+    profile: UserProfile,
+    accessMask: Long,
+    character: Option[com.eveonline.xmlapi.Character]) {
+
+    profile.updateAccessMask(Option(accessMask))
+
+    val updatedCharacterID = character.map { _.characterID }
+    profile.updateCharacterID(updatedCharacterID)
+  }
 
   case class VerboseAsset(
     locationID: Int,
@@ -119,7 +105,8 @@ object User extends Controller with JsonController {
     contents: List[VerboseAsset],
     locationName: Option[String],
     assetName: Option[String],
-    usedInManufacturing: Boolean) {}
+    usedInManufacturing: Boolean)
+
   object VerboseAsset {
     implicit val format = Json.format[VerboseAsset]
 
@@ -138,7 +125,7 @@ object User extends Controller with JsonController {
     }
   }
 
-  def getUserAssets = AuthenticatedAction.async { authedRequest =>
+  def getUserAssets: Action[AnyContent] = AuthenticatedAction.async { authedRequest =>
     operateOnProfile(authedRequest) { profile =>
       val assets = CharacterAssets.listForCharacter(profile)
 
@@ -159,7 +146,7 @@ object User extends Controller with JsonController {
     }
   }
 
-  def operateOnProfile(request: AuthenticatedRequest[AnyContent])(block: UserProfile => Future[Result]) = {
+  def operateOnProfile(request: AuthenticatedRequest[AnyContent])(block: UserProfile => Future[Result]): Future[Result] = {
     val userID = request.authenticationProfile.userID
     val profileO = UserProfile.getWithID(userID)
     profileO.fold({
@@ -167,9 +154,8 @@ object User extends Controller with JsonController {
     })(p => block(p))
   }
 
-  def getMarketOrders = AuthenticatedAction.async { implicit authedRequest =>
+  def getMarketOrders: Action[AnyContent] = AuthenticatedAction.async { implicit authedRequest =>
     operateOnProfile(authedRequest) { profile =>
-      import com.eveonline.xmlapi.requests.MarketOrders
       val orders = MarketOrders.listForCharacter(profile).map { _.filter { _.orderState == 0 } }
 
       orders.map { o =>

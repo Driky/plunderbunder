@@ -1,25 +1,24 @@
 package com.eveonline.crest.requests
 
-import play.api.libs.json._
+import play.api.libs.json.{ Json, JsError, JsSuccess }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import com.eveonline.crest.MarketOrder
 
-
-
 case class MarketOrdersResponse(
   totalCount: Int,
   items: List[MarketOrder])
+
 object MarketOrdersResponse {
   implicit val marketSellOrdersResponseFormat = Json.format[MarketOrdersResponse]
 }
 
 object RegionalMarketOrders extends CrestRequest {
-  
+
   val requestAcceptType = "application/vnd.ccp.eve.MarketOrderCollection-v1+json"
 
-  def regionalBuyOrders(regionID: Long, itemID: Long, token: String) = {
+  def regionalBuyOrders(regionID: Long, itemID: Long, token: String): Future[List[MarketOrder]] = {
     val buyOrderUrl = s"${crestEndpoint}/market/${regionID}/orders/buy/?type=${crestEndpoint}/types/${itemID}/"
 
     val response = get(buyOrderUrl, token, acceptType = Option(requestAcceptType))
@@ -35,7 +34,7 @@ object RegionalMarketOrders extends CrestRequest {
     }
   }
 
-  def parseMarketOrdersResponse(rawResponse: String) = {
+  def parseMarketOrdersResponse(rawResponse: String): Future[List[MarketOrder]] = {
     val jsonBody = Json.parse(rawResponse)
 
     val marketOrdersJs = jsonBody.validate[MarketOrdersResponse]
@@ -48,8 +47,8 @@ object RegionalMarketOrders extends CrestRequest {
     }
   }
 
-  def regionalSellOrders(regionID: Long, itemID: Long, token: String) = {
-    // Crawling this URL doesn't really make much sense because the argument isn't obvious 
+  def regionalSellOrders(regionID: Long, itemID: Long, token: String): Future[List[MarketOrder]] = {
+    // Crawling this URL doesn't really make much sense because the argument isn't obvious
     val sellOrderUrl = s"${crestEndpoint}/market/${regionID}/orders/sell/?type=${crestEndpoint}/types/${itemID}/"
 
     val response = get(sellOrderUrl, token, acceptType = Option(requestAcceptType))

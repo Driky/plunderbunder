@@ -1,9 +1,8 @@
 package com.eveonline.sde
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
+import play.api.libs.json.{ Json, Reads, __ }
 
-import play.api.libs.functional.syntax._
+import play.api.libs.functional.syntax._  // scalastyle:ignore
 
 case class ResearchTimeActivity(
   id: Long,
@@ -11,9 +10,7 @@ case class ResearchTimeActivity(
   override val materials: List[BlueprintActivity.Material],
   override val skills: List[BlueprintActivity.Skill],
   override val products: List[BlueprintActivity.Product]) extends BlueprintActivity(id, activityTime,
-  materials, skills, products, BlueprintActivity.ResearchTime) {
-  
-}
+  materials, skills, products, BlueprintActivity.ResearchTime)
 
 object ResearchTimeActivity {
   implicit val researchTimeActivityReads = (

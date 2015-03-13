@@ -1,11 +1,10 @@
 package com.eveonline.sde
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
+import play.api.libs.json.{ Reads, __ }
 
-import play.api.libs.functional.syntax._
+import play.api.libs.functional.syntax._ // scalastyle:ignore
 
-import anorm._
+import anorm.SQL
 import play.api.db.DB
 
 import play.api.Play.current
@@ -16,9 +15,7 @@ abstract class BlueprintActivity(
   val materials: List[BlueprintActivity.Material],
   val skills: List[BlueprintActivity.Skill],
   val products: List[BlueprintActivity.Product],
-  val activityType: Int) {
-
-}
+  val activityType: Int)
 
 object BlueprintActivity {
   val Manufacturing = 1
@@ -30,15 +27,13 @@ object BlueprintActivity {
   case class Material(
     blueprintActivityID: Long,
     typeID: Long,
-    quantity: Int) {
-
-  }
+    quantity: Int)
 
   object Material {
     def createForActivity(activityID: Long, material: Material) {
 
       DB.withConnection { implicit c =>
-        val sql = SQL(s"""INSERT INTO sde_blueprint_activity_materials 
+        val sql = SQL(s"""INSERT INTO sde_blueprint_activity_materials
         (blueprint_activity_id, type_id, quantity) VALUES (
          {blueprintActivityID}, {typeID}, {quantity}
         );""").on(
@@ -54,15 +49,13 @@ object BlueprintActivity {
   case class Skill(
     blueprintActivityID: Long,
     typeID: Long,
-    level: Int) {
-
-  }
+    level: Int)
 
   object Skill {
     def createForActivity(activityID: Long, skill: Skill) {
 
       DB.withConnection { implicit c =>
-        val sql = SQL(s"""INSERT INTO sde_blueprint_activity_skills 
+        val sql = SQL(s"""INSERT INTO sde_blueprint_activity_skills
         (blueprint_activity_id, type_id, level) VALUES (
          {blueprintActivityID}, {typeID}, {level}
         );""").on(
@@ -79,15 +72,13 @@ object BlueprintActivity {
     blueprintActivityID: Long,
     typeID: Long,
     quantity: Int,
-    probability: Option[BigDecimal]) {
-    
-  }
-  
+    probability: Option[BigDecimal])
+
   object Product {
     def createForActivity(activityID: Long, product: Product) {
 
       DB.withConnection { implicit c =>
-        val sql = SQL(s"""INSERT INTO sde_blueprint_activity_products 
+        val sql = SQL(s"""INSERT INTO sde_blueprint_activity_products
         (blueprint_activity_id, type_id, quantity, probability) VALUES (
          {blueprintActivityID}, {typeID}, {quantity}, {probability}
         );""").on(
@@ -103,22 +94,22 @@ object BlueprintActivity {
 
   implicit val materialReads = (
     Reads.pure(-1L) and
-    (__ \ "typeID").read[Long] and
+    (__ \ "typeID").read[Long] and                    // scalastyle:ignore
     (__ \ "quantity").read[Int])(Material.apply _)
   implicit val skillReads = (
     Reads.pure(-1L) and
-    (__ \ "typeID").read[Long] and
+    (__ \ "typeID").read[Long] and                    // scalastyle:ignore
     (__ \ "level").read[Int])(Skill.apply _)
   implicit val productReads = (
     Reads.pure(-1L) and
-    (__ \ "typeID").read[Long] and
+    (__ \ "typeID").read[Long] and                    // scalastyle:ignore
     (__ \ "quantity").read[Int] and
     (__ \ "probability").readNullable[BigDecimal])(Product.apply _)
 
   def createForBlueprint(blueprint: Blueprint, activity: BlueprintActivity) {
 
     DB.withConnection { implicit c =>
-      val sql = SQL(s"""INSERT INTO sde_blueprint_activity 
+      val sql = SQL(s"""INSERT INTO sde_blueprint_activity
         (blueprint_id, activity_type, activity_time) VALUES (
          {blueprintID}, {activityType}, {activityTime}
         );""").on(
@@ -137,6 +128,5 @@ object BlueprintActivity {
     }
   }
 }
-
 
 

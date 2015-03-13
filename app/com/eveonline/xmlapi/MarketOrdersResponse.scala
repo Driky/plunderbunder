@@ -6,9 +6,7 @@ import org.joda.time.format.DateTimeFormat
 case class MarketOrdersResponse(apiVersion: Int,
   responseTime: DateTime,
   cachedUntil: DateTime,
-  marketOrders: List[MarketOrder]) {
-
-}
+  marketOrders: List[MarketOrder])
 
 object MarketOrdersResponse {
 
@@ -28,5 +26,4 @@ object MarketOrdersResponse {
 
     MarketOrdersResponse(apiVersion, currentTime, cacheTime, orders)
   }
-
 }

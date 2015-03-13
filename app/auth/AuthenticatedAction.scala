@@ -1,27 +1,25 @@
 package auth
 
-import play.api._
+import play.api.{ Play, Logger }
 
-import play.api.mvc._
-import play.api.mvc.Results._
-import play.api.libs.json._
+import play.api.mvc.{ Request, Result, WrappedRequest, ActionBuilder }
+import play.api.mvc.Results.Unauthorized
+import play.api.libs.json.{ Json, JsError, JsObject, JsString, JsSuccess }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import com.eveonline.crest._
-import com.eveonline.crest.SingleSignOn._
-import com.eveonline.crest.VerifyResponse
+import com.eveonline.crest.{ VerifyResponse, SingleSignOn, InvalidTokenException }
 import org.joda.time.DateTime
 
-import anorm._
+import anorm.SQL
 import play.api.db.DB
 
 import play.api.Play.current
 
 case class AuthenticatedRequest[A](
   request: Request[A],
-  authenticationProfile: AuthenticationProfile) extends WrappedRequest(request) {}
+  authenticationProfile: AuthenticationProfile) extends WrappedRequest(request)
 
 case class AuthenticationProfile(
   accessToken: String,
@@ -30,7 +28,7 @@ case class AuthenticationProfile(
   characterName: String,
   userID: Long) {
 
-  def copyWithAccess(newAccessToken: String, newAccessExpiration: DateTime) = {
+  def copyWithAccess(newAccessToken: String, newAccessExpiration: DateTime): AuthenticationProfile = {
     AuthenticationProfile(newAccessToken, newAccessExpiration, refreshToken, characterName, userID)
   }
 }
@@ -41,7 +39,7 @@ object AuthenticationProfile {
 
 object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
 
-  def invokeBlock[A](request: Request[A], block: (AuthenticatedRequest[A]) => Future[Result]) = {
+  def invokeBlock[A](request: Request[A], block: (AuthenticatedRequest[A]) => Future[Result]): Future[Result] = {
     request.session.get(AuthenticationProfile.sessionKey).fold({
       // no auth, redirect
       unauthorizedFuture
@@ -64,10 +62,10 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
 
               // Verify it's invalid, just to be sure
               val verifiedResult = if (!offline) {
-                verifyAuthToken(profile.accessToken)
+                SingleSignOn.verifyAuthToken(profile.accessToken)
               } else {
                 Logger.info("Faking the verification")
-                val expires = (new DateTime()).plusYears(10)
+                val expires = (new DateTime()).plusYears(10) // scalastyle:ignore
                 Future(VerifyResponse(expires, "Offline User", "all", "hash", 0, "offline"))
               }
 
@@ -79,7 +77,7 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
                   // Generate refresh token
                   generateAuthTokenFromRefresh[A](request, block)
                 }
-                case e => throw e
+                case e:Throwable => throw e
               }).flatMap(f => f)
             }
           }
@@ -89,11 +87,11 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
     })
   }
 
-  def unauthorizedFuture = Future(Unauthorized(JsObject(Seq("error" -> JsString("Token Expired")))))
+  def unauthorizedFuture:Future[Result] = Future(Unauthorized(JsObject(Seq("error" -> JsString("Token Expired")))))
 
   def createUserIfApplicable(verify: VerifyResponse): Option[Long] = {
     DB.withConnection { implicit c =>
-      val sql = SQL("""SELECT id, eve_id 
+      val sql = SQL("""SELECT id, eve_id
         FROM plunderbunder_users
         WHERE eve_id={eve_id}""").on('eve_id -> verify.characterID)
 
@@ -122,13 +120,13 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] {
         existingProfileJs match {
           case JsSuccess(existingProfile, _) => {
             existingProfile.refreshToken.fold(unauthorizedFuture)(rt => {
-              val authToken = generateAuthTokenFromRefreshToken(rt)
+              val authToken = SingleSignOn.generateAuthTokenFromRefreshToken(rt)
               val r = authToken.map { token =>
                 {
                   Logger.info(s"Refreshed Session authenticated: ${token}")
 
                   // Verify to be safe
-                  val verifiedResult = verifyAuthToken(token.accessToken)
+                  val verifiedResult = SingleSignOn.verifyAuthToken(token.accessToken)
 
                   verifiedResult.map(res => {
 

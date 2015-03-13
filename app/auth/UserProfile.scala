@@ -1,11 +1,11 @@
 package auth
 
-import anorm._
+import anorm.SQL
 import play.api.db.DB
 
 import play.api.Play.current
 
-import play.api.libs.json._
+import play.api.libs.json.Json
 
 case class UserProfile(
   id: Long,
@@ -37,14 +37,14 @@ case class UserProfile(
       sql.on('email_address -> emailAddress, 'user_id -> id).executeUpdate()
     }
   }
-  
+
   def updateAccessMask(accessMask: Option[Long]) {
     DB.withConnection { implicit c =>
       val sql = SQL("""UPDATE plunderbunder_users SET access_mask={accessMask} where id={user_id}""")
       sql.on('accessMask -> accessMask, 'user_id -> id).executeUpdate()
     }
   }
-  
+
   def updateCharacterID(characterID: Option[Long]) {
     DB.withConnection { implicit c =>
       val sql = SQL("""UPDATE plunderbunder_users SET character_id={characterID} where id={user_id}""")
@@ -55,10 +55,10 @@ case class UserProfile(
 
 object UserProfile {
   implicit val format = Json.format[UserProfile]
-  
-  def getWithID(userID: Long) = {
+
+  def getWithID(userID: Long): Option[UserProfile] = {
     DB.withConnection { implicit c =>
-      val sql = SQL("""SELECT id, eve_id, character_name, character_id, api_key_id, api_key_vcode, access_mask, email_address  
+      val sql = SQL("""SELECT id, eve_id, character_name, character_id, api_key_id, api_key_vcode, access_mask, email_address
         FROM plunderbunder_users
         WHERE id={user_id}""").on('user_id -> userID)
 

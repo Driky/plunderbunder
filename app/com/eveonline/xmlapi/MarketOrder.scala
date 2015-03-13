@@ -1,8 +1,8 @@
 package com.eveonline.xmlapi
 
-import play.api.libs.json._
+import play.api.libs.json.Json
 
-import anorm._
+import anorm.SQL
 import play.api.db.DB
 import anorm.SqlParser.{ scalar }
 
@@ -28,9 +28,7 @@ case class MarketOrder(
   issued: DateTime,
   duration: Int,
   stationName: Option[String] = None,
-  typeName: Option[String] = None) {
-
-}
+  typeName: Option[String] = None)
 
 object MarketOrder {
   implicit val format = Json.format[MarketOrder]

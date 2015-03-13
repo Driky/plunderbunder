@@ -1,9 +1,8 @@
 package com.eveonline.sde
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
+import play.api.libs.json.Json
 
-import anorm._
+import anorm.SQL
 import play.api.db.DB
 
 import play.api.Play.current
@@ -24,27 +23,26 @@ case class Region(
   yMin: BigDecimal,
   z: BigDecimal,
   zMax: BigDecimal,
-  zMin: BigDecimal) {
-}
+  zMin: BigDecimal)
 
 object Region extends BaseDataset {
   implicit val regionReads = Json.reads[Region]
   implicit val regionWrites = Json.writes[Region]
 
-  def dataSetName = "sde_regions"
+  def dataSetName: String = "sde_regions"
 
-  def create(value: Region) = {
+  def create(value: Region): Option[Long] = {
     DB.withConnection { implicit c =>
-      val sql = SQL(s"""INSERT INTO ${dataSetName} 
+      val sql = SQL(s"""INSERT INTO ${dataSetName}
         (region_id, region_name,
-        x, y, z, x_min, x_max, y_min, y_max, z_min, z_max, 
+        x, y, z, x_min, x_max, y_min, y_max, z_min, z_max,
         faction_id, radius) VALUES (
          {regionID}, {regionName},
-         {x}, {y}, {z}, 
-         {xMin},{xMax}, 
-         {yMin}, {yMax}, 
+         {x}, {y}, {z},
+         {xMin},{xMax},
+         {yMin}, {yMax},
          {zMin}, {zMax},
-         {factionID}, {radius} 
+         {factionID}, {radius}
         );""").on(
         'regionID -> value.regionID,
         'regionName -> value.regionName,
